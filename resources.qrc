@@ -3,7 +3,8 @@
 <file alias="gameStart.png">icons/gameStart.png</file>
 <file alias="gamePause.png">icons/gamePause.png</file>
 <file alias="gameEnd.png">icons/gameEnd.png</file>
-<file alias="gameLoad.png">icons/gameLoad.png</file>
+<file alias="loadAI.png">icons/loadAI.png</file>
+<file alias="loadMap.png">icons/loadMap.png</file>
 <file alias="modeRun.png">icons/modeRun.png</file>
 <file alias="modeDebug.png">icons/modeDebug.png</file>
 <file alias="reset.png">icons/reset.png</file>

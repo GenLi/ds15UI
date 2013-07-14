@@ -4,7 +4,6 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys
 from info_widget import *
-import load_dlg
 import qrc_resource
 
 RUN_MODE = 0
@@ -53,15 +52,19 @@ class ai_debugger(QMainWindow):
         gameEndAction = self.createAction("&End", self.endGame,
                                          "Ctrl+E","gameEnd",
                                          "end game")
-        gameLoadAction = self.createAction("&Load", self.loadDlg,
-                                          "Ctrl+L", "gameLoad",
-                                          "load AI and map")
+        gameLoadAction1 = self.createAction("Load &AI", self.loadAIdlg,
+                                          "Ctrl+A", "loadAI",
+                                          "load AI")
+        gameLoadAction2 = self.createAction("Load &MAP", self.loadMapdlg,
+                                           "Ctrl+M", "loadMap",
+                                           "load MAP")
         gameEndAction.setEnabled(self.started)
-        
+
         #creat game menu and add actions
         self.gameMenu = self.menuBar().addMenu("&Game")
         self.addActions(self.gameMenu, (gameStartAction, gamePauseAction,
-                                  gameEndAction, None, gameLoadAction))
+                                  gameEndAction, None, gameLoadAction1,
+                                        gameLoadAction2))
 
         #creat actions and add them to config menu
         self.configMenu = self.menuBar().addMenu("&Config")
@@ -70,32 +73,52 @@ class ai_debugger(QMainWindow):
                                         tip = "reset all settings")
         self.configMenu.addAction(resetAction)
 
-        modeGroup = QActionGroup(self)
+        modeGroup1 = QActionGroup(self)
         run_modeAction = self.createAction("Run_mode", self.setRunMode,
                                           "Ctrl+R", "modeRun", "run mode",
                                            True, "toggled(bool)")
         debug_modeAction = self.createAction("Debug_mode", self.setDebugMode,
                                             "Ctrl+D", "modeDebug", "debug mode",
                                              True, "toggled(bool)")
-        modeGroup.addAction(run_modeAction)
-        modeGroup.addAction(debug_modeAction)
+        modeGroup1.addAction(run_modeAction)
+        modeGroup1.addAction(debug_modeAction)
         run_modeAction.setChecked(True)
 
+        modeGroup2 = QActionGroup(self)
+        continue_modeAction = self.createAction("Continuous_mode", self.setConMode,
+                                               icon = "modeCon",
+                                               tip = "set continuous mode",
+                                               checkable = True,
+                                               signal = "toggled(bool)")
+        discon_modeAction = self.createAction("DisContinuous_mode", self.setDisconMode,
+                                              icon = "modeDiscon",
+                                              tip = "set discontinuous mode",
+                                              checkable = True,
+                                              signal = "toggled(bool)")
+        modeGroup2.addAction(continue_modeAction)
+        modeGroup2.addAction(discon_modeAction)
+        continue_modeAction.setChecked(True)
+        
         modeMenu = self.configMenu.addMenu("&Mode")
-        self.addActions(modeMenu, (run_modeAction, debug_modeAction))
+        self.addActions(modeMenu, (run_modeAction, debug_modeAction, None,
+                                   continue_modeAction, discon_modeAction))
 
         #action group's resetable values
 
         self.resetableActions = ((run_modeAction, True),
-                                 (debug_modeAction, False))
+                                 (debug_modeAction, False),
+                                 (continue_modeAction, True),
+                                 (discon_modeAction, False))
 
         #creat toolbars and add actions
 
         gameToolbar =  self.addToolBar("Game")
         self.addActions(gameToolbar, (gameStartAction, gamePauseAction,
-                                  gameEndAction, gameLoadAction))
+                                  gameEndAction, gameLoadAction1, gameLoadAction2))
         configToolbar = self.addToolBar("Config")
         self.addActions(configToolbar, (run_modeAction, debug_modeAction,
+                                        None, continue_modeAction,
+                                        discon_modeAction, None,
                                         resetAction))
 
 
@@ -144,15 +167,49 @@ class ai_debugger(QMainWindow):
     def endGame(self):
         pass
 
-    def loadDlg(self):
-        pass
+    def loadAIdlg(self):
+        dir = r"./FileAI"
+        fname = unicode(QFileDialog.getOpenFileName(self,
+                                                    "load AI File", dir,
+                                                    "AI files (%s)" % "*.exe"))
+        if fname and fname != self.loaded_ai:
+            print fname
+            if self.loadAI(fname):
+                self.loaded_ai = fname
+            else:
+                m = QMessageBox.warning(self, "Error", "Failed to load the AI file %s"
+                                     %fname, QMessageBox.Ok, QMessageBox.NoButton)
+    def loadMapdlg(self):
+        dir = r"./FileMap"
+        fname = unicode(QFileDialog.getOpenFileName(self,
+                                                    "load Map File", dir,
+                                                    "Map files (%s)" % "*.map"))
+        if fname and fname != self.loaded_map:
+            print fname
+            if self.loadAI(fname):
+                self.loaded_map = fname
+            else:
+                m = QMessageBox.warning(self, "Error", "Failed to load the Map file %s"
+                                     %fname, QMessageBox.Ok, QMessageBox.NoButton)
 
+    def loadAI(self, fname):
+        return False
+
+    def loadMap(self, fname):
+        return False
+    
     def setRunMode(self):
         pass
 
     def setDebugMode(self):
         pass
 
+    def setConMode(self):
+        pass
+
+    def setDisconMode(self):
+        pass
+    
     def reset(self):
         pass
 
