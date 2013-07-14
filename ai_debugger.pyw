@@ -3,6 +3,9 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys
+from info_widget import *
+import load_dlg
+import qrc_resource
 
 RUN_MODE = 0
 DEBUG_MODE = 1
@@ -29,8 +32,8 @@ class ai_debugger(QMainWindow):
         infoDockWidget.setObjectName("InfoDockWidget")
         infoDockWidget.setAllowedAreas(Qt.LeftDockWidgetArea|
                                        Qt.RightDockWidgetArea)
-        self.listWidget = QListWidget()
-        infoDockWidget.setWidget(self.listWidget)
+        self.infoWidget = InfoWidget()
+        infoDockWidget.setWidget(self.infoWidget)
         self.addDockWidget(Qt.RightDockWidgetArea, infoDockWidget)
 
         #add status bar
@@ -43,7 +46,7 @@ class ai_debugger(QMainWindow):
 
         gameStartAction = self.createAction("&Start", self.startGame,
                                             "Ctrl+S","gameStart",
-                                            "start game",True)
+                                            "start game")
         gamePauseAction = self.createAction("&Pause", self.pauseGame,
                                             "Ctrl+P","gamePause",
                                             "pause game",True)
@@ -53,6 +56,8 @@ class ai_debugger(QMainWindow):
         gameLoadAction = self.createAction("&Load", self.loadDlg,
                                           "Ctrl+L", "gameLoad",
                                           "load AI and map")
+        gameEndAction.setEnabled(self.started)
+        
         #creat game menu and add actions
         self.gameMenu = self.menuBar().addMenu("&Game")
         self.addActions(self.gameMenu, (gameStartAction, gamePauseAction,
@@ -60,16 +65,18 @@ class ai_debugger(QMainWindow):
 
         #creat actions and add them to config menu
         self.configMenu = self.menuBar().addMenu("&Config")
-        resetAction = self.createAction("&Reset", self.reset)
+        resetAction = self.createAction("&Reset", self.reset,
+                                        icon = "reset",
+                                        tip = "reset all settings")
         self.configMenu.addAction(resetAction)
 
         modeGroup = QActionGroup(self)
         run_modeAction = self.createAction("Run_mode", self.setRunMode,
-                                          "Ctrl+R",
-                                         checkable = True, signal = "toggled(bool)")
+                                          "Ctrl+R", "modeRun", "run mode",
+                                           True, "toggled(bool)")
         debug_modeAction = self.createAction("Debug_mode", self.setDebugMode,
-                                            "Ctrl+D", checkable =True,
-                                            signal = "toggled(bool)")
+                                            "Ctrl+D", "modeDebug", "debug mode",
+                                             True, "toggled(bool)")
         modeGroup.addAction(run_modeAction)
         modeGroup.addAction(debug_modeAction)
         run_modeAction.setChecked(True)
@@ -88,7 +95,8 @@ class ai_debugger(QMainWindow):
         self.addActions(gameToolbar, (gameStartAction, gamePauseAction,
                                   gameEndAction, gameLoadAction))
         configToolbar = self.addToolBar("Config")
-        self.addActions(configToolbar, (run_modeAction, debug_modeAction))
+        self.addActions(configToolbar, (run_modeAction, debug_modeAction,
+                                        resetAction))
 
 
 
@@ -153,5 +161,6 @@ if __name__ == "__main__":
     form = ai_debugger()
     rect = QApplication.desktop().availableGeometry()
     form.resize(rect.size())
+    form.setWindowIcon(QIcon(":/icon.png"))
     form.show()
     app.exec_()
