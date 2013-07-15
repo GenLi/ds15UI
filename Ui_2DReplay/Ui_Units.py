@@ -1,23 +1,20 @@
-#Ver 0.0 edited at 2013-07-14-1:12
-
-#items needed in replay scene
-#grids of map
-#soldiers
-#cursor
+#回放界面、地图编辑器界面场景所需图元
+#地图格点：
+#单位：
+#光标：
 
 from PyQt4 import QtGui, QtCore
 
 
 
-UNIT_WIDTH = 100
-UNIT_HEIGHT = 100
+UNIT_WIDTH = 50
+UNIT_HEIGHT = 50
 PEN_WIDTH = 0.5
 
 class Ui_MapUnit(QtGui.QGraphicsItem):
     "the unit of the map. Generalized."
-    def __init__(self, x, y, terrain = None, parent = None):
+    def __init__(self, x, y, terrain):
         "Initialize the flags and position info"
-        QtGui.QGraphicsItem.__init__(self, parent)
         self.mapX = x
         self.mapY = y
         #load pixmap
@@ -33,17 +30,17 @@ class Ui_MapUnit(QtGui.QGraphicsItem):
         #draw pixmap
         pen = QtGui.QPen()
         pen.setColor(QtGui.QColor(0, 0, 0))
-        pen.setStyle(QtCore.Qt.DotLine)
+        pen.setStyle(Qt.DotLine)
         brush = QtGui.QBrush()
         brush.setColor(QtGui.QColor(255, 0, 0))
-        brush.setStyle(QtCore.Qt.SolidPattern)
+        brush.setStyle(Qt.SolidPattern)
         painter.setPen(pen)
         painter.setBrush(brush)
-        painter.drawRect(QtCore.QRect(0, 0, UNIT_WIDTH, UNIT_HEIGHT))
+        painter.drawRect()
         #for test
 
 
-class Ui_SoldierUnit(QtGui.QGraphicsItem):
+class Ui_SoldierUnit(QtGuiQGraphicsItem):
     "the unit of the soldiers. Generalized."
     def __init__(self, x, y, soldiertype):
         pass
