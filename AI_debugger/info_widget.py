@@ -32,7 +32,7 @@ class InfoWidget(QWidget):
         self.layout.addWidget(self.info_unit, 4, 1)
         self.layout.addWidget(self.label_order, 5, 0)
         self.layout.addWidget(self.info_order, 5, 1)
-        
+
         self.setLayout(self.layout)
     def setAiFileinfo(self, str):
         self.info_aifile.setText(str)
@@ -46,4 +46,8 @@ class InfoWidget(QWidget):
         self.info_time.setText(str)
     def setOrderinfo(self, str):
         self.info_order.setText(str)
-    
+
+    #reimplement close event:just set invisible
+    def closeEvent(self, event):
+        self.setVisible(False)
+        event.ignore()

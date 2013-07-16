@@ -27,14 +27,15 @@ class ai_debugger(QMainWindow):
 
         #add a dock widget to show infomations of the running AI and loaded files
 
-        infoDockWidget = QDockWidget("Infos", self)
-        infoDockWidget.setObjectName("InfoDockWidget")
-        infoDockWidget.setAllowedAreas(Qt.LeftDockWidgetArea|
-                                       Qt.RightDockWidgetArea)
+        self.infoDockWidget = QDockWidget("Infos", self)
+        self.infoDockWidget.setObjectName("InfoDockWidget")
+        self.infoDockWidget.setAllowedAreas(Qt.LeftDockWidgetArea|
+                                            Qt.RightDockWidgetArea)
         self.infoWidget = InfoWidget()
-        infoDockWidget.setWidget(self.infoWidget)
-        self.addDockWidget(Qt.RightDockWidgetArea, infoDockWidget)
-
+        self.infoDockWidget.setWidget(self.infoWidget)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.infoDockWidget)
+        self.info_visible = self.infoDockWidget.isVisible()
+        
         #add status bar
 
         self.status = self.statusBar()
@@ -98,7 +99,7 @@ class ai_debugger(QMainWindow):
         modeGroup2.addAction(continue_modeAction)
         modeGroup2.addAction(discon_modeAction)
         continue_modeAction.setChecked(True)
-        
+
         modeMenu = self.configMenu.addMenu("&Mode")
         self.addActions(modeMenu, (run_modeAction, debug_modeAction, None,
                                    continue_modeAction, discon_modeAction))
@@ -109,7 +110,15 @@ class ai_debugger(QMainWindow):
                                  (debug_modeAction, False),
                                  (continue_modeAction, True),
                                  (discon_modeAction, False))
+        #creat action and add it to window menu
 
+        dockAction = self.createAction("(dis/en)able infos", self.setInfoWidget,
+                                       tip = "enable/disable info dock-widget",
+                                       checkable = True,
+                                       signal = "toggled(bool)")
+        self.windowMenu = self.menuBar().addMenu("&Window")
+        self.windowMenu.addAction(dockAction)
+        dockAction.setChecked(True)
         #creat toolbars and add actions
 
         gameToolbar =  self.addToolBar("Game")
@@ -213,6 +222,13 @@ class ai_debugger(QMainWindow):
     def reset(self):
         pass
 
+    def setInfoWidget(self):
+        if (self.info_visible):
+            self.infoDockWidget.close()
+            self.info_visible = False
+        else:
+            self.infoDockWidget.show()
+            self.info_visible = True
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     form = ai_debugger()
