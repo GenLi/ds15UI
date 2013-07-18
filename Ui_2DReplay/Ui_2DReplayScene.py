@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-#Ver 0.3 edited at 2013-07-16-0:48
-#Changes: solves the bug in moving animation
-#         attack animation added
+#Ver 0.4 edited at 2013-07-17-20:00
+#Changes: the base class replayview
+#         the termination of animation added
 
 #scene, view of replay
 
 from Ui_Units import *
 import sys, math
+
 
 
 class Unit_forTest:
@@ -50,11 +51,13 @@ class Ui_ReplayView(QtGui.QGraphicsView):
         self.SetSoldiers(units)
         #initialization of soldier units
         #initialization of the cursor
-        self.timeline = QtCore.QTimeLine()
+        self.movTimeline = QtCore.QTimeLine()
+        self.atkTimeline = QtCore.QTimeLine()
+        self.dieTimeline = QtCore.QTimeLine()
         self.animation = QtGui.QGraphicsItemAnimation()
+        self.label = Ui_GridLabel("", 0, 0)
         #animation
-    
-    #def SetSoliders(self):
+
     def SetSoldiers(self, units):
         "set the pos of soldiers"
         #what if a soldier dies??
@@ -63,7 +66,6 @@ class Ui_ReplayView(QtGui.QGraphicsView):
             self.soldierItem[i].mapX, self.soldierItem[i].mapY = \
                                       units[i].x, units[i].y
 
-    #def MovingAnimation(self):
     def MovingAnimation(self, idnum, route):
         "moving animation, displayed when the soldier moves"
         TIME_PER_FRAME = 1000#ms, one-step movement in a frame
@@ -74,22 +76,20 @@ class Ui_ReplayView(QtGui.QGraphicsView):
         steps = len(route)-1
         frames = steps+FRAMES_BEFORE_MOVE
 
-        self.timeline = QtCore.QTimeLine(frames*TIME_PER_FRAME)
-        self.timeline.setCurveShape(self.timeline.LinearCurve)
+        self.movTimeline = QtCore.QTimeLine(frames*TIME_PER_FRAME)
+        self.movTimeline.setCurveShape(self.movTimeline.LinearCurve)
         self.animation = QtGui.QGraphicsItemAnimation()
         self.animation.setItem(soldier)
-        self.animation.setTimeLine(self.timeline)
+        self.animation.setTimeLine(self.movTimeline)
         for i in range(steps+1):
             #
             pos = GetPos(route[i][0], route[i][1])
             self.animation.setPosAt(float((i+FRAMES_BEFORE_MOVE))/frames, pos)
         #
         soldier.SetMapPos(route[steps][0], route[steps][1])
-        #self.animation.setPosAt(1, soldier.GetPos())
-        self.timeline.start()
+        self.movTimeline.start()
 
-    #def AttackAnimation(self):
-    def AttackAnimation(self, selfId, targetId, damage, info = ""):
+    def AttackingAnimation(self, selfId, targetId, damage, info = ""):
         "attack animation, displayed when the soldier launches an attack."
         TOTAL_TIME = 2000
         TIME_FOR_MOVING = 500
@@ -98,21 +98,63 @@ class Ui_ReplayView(QtGui.QGraphicsView):
         attacker = self.soldierItem[selfId]
         target = self.soldierItem[targetId]
         
-        self.timeline = QtCore.QTimeLine(TOTAL_TIME)
-        self.timeline.setCurveShape(self.timeline.LinearCurve)
+        self.atkTimeline = QtCore.QTimeLine(TOTAL_TIME)
+        self.atkTimeline.setCurveShape(self.atkTimeline.LinearCurve)
         self.animation = QtGui.QGraphicsItemAnimation()
         self.animation.setItem(attacker)
-        self.animation.setTimeLine(self.timeline)
+        self.animation.setTimeLine(self.atkTimeline)
         r = DIST/math.sqrt((attacker.mapX-target.mapX)**2+(attacker.mapY-target.mapY)**2)
         pos = attacker.GetPos()*(1-r)+target.GetPos()*r
         self.animation.setPosAt(0, attacker.GetPos())
         self.animation.setPosAt(float(TIME_FOR_MOVING)/TOTAL_TIME, pos)
         self.animation.setPosAt(float(TIME_WHEN_RESETING)/TOTAL_TIME, pos)
         self.animation.setPosAt(1, attacker.GetPos())
-        #show damage and info
-        self.timeline.start()
 
-    #def DieAnimation(self, selfId):
+        text = "%+d" % damage
+        if (damage==0):
+            text = info
+        self.label = Ui_GridLabel(text, target.mapX, target.mapY)
+        self.connect(self.atkTimeline, QtCore.SIGNAL("valueChanged(qreal)"),
+                     self._ShowLabel)
+        #set focus
+        self.atkTimeline.start()
+    def _ShowLabel(self, time):
+        SHOW_TIME = 0.6
+        DISAP_TIME = 0.9
+        if (time>=SHOW_TIME):
+            self.scene().addItem(self.label)
+            self.label.setPos(GetPos(self.label.mapX, self.label.mapY))
+        if (time>=DISAP_TIME):
+            self.scene().removeItem(self.label)
+
+    def DiedAnimation(self, selfId):
+        "displayed when a soldier dies"
+        TOTAL_TIME = 2000
+        TIME_PER_FRAME = 40
+        soldier = self.soldierItem[selfId]
+
+        self.dieTimeline = QtCore.QTimeLine(TOTAL_TIME)
+        self.dieTimeline.setCurveShape(self.dieTimeline.LinearCurve)
+        self.dieTimeline.setUpdateInterval(TIME_PER_FRAME)
+        self.connect(self.dieTimeline, QtCore.SIGNAL('valueChanged(qreal)'),
+                     soldier.FadeOut)
+        self.dieTimeline.start()
+
+    #def TerrainChangeAnimation(self):
+
+    def TerminateAnimation(self, units):
+        "stop the animation and rearrange the units. \
+        it should be called after an naimation."
+        self.animation.clear()
+        animTimeline = [self.movTimeline, self.atkTimeline, self.dieTimeline]
+        for timeline in animTimeline:
+            timeline.stop()
+            try:
+                timeline.valueChanged.disconnect()
+            except TypeError:
+                #pass
+                print "No connection!"#for test
+        self.SetSoldiers(units)
 
 
 
@@ -123,7 +165,11 @@ if __name__=="__main__":
     view.setBackgroundBrush(QtGui.QColor(255, 255, 255))
     view.setWindowTitle("Replay")
     view.show()
-    #view.MovingAnimation(1, route)#for test
     print view.soldierItem[1].mapX, view.soldierItem[1].mapY#for test
-    view.AttackAnimation(0, 3, 0)
+    view.MovingAnimation(1, route)#for test
+    view.TerminateAnimation(units)#for test
+    print view.movTimeline.state()#for test
+    print view.soldierItem[1].mapX, view.soldierItem[1].mapY#for test
+    #view.AttackingAnimation(0, 3, -20, "Blocked")#for test
+    #view.DiedAnimation(0)#for test
     sys.exit(app.exec_())
