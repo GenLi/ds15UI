@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-#Ver 0.4 edited at 2013-07-17-20:00
-#Changes: the base class replayview
-#         the termination of animation added
+#Ver 0.5 edited at 2013-07-17-21:00
+#Changes: a frame of data of battles
 
 #scene, view of replay
 
@@ -145,8 +144,8 @@ class Ui_ReplayView(QtGui.QGraphicsView):
     def TerminateAnimation(self, units):
         "stop the animation and rearrange the units. \
         it should be called after an naimation."
-        self.animation.clear()
         animTimeline = [self.movTimeline, self.atkTimeline, self.dieTimeline]
+        self.animation.clear()
         for timeline in animTimeline:
             timeline.stop()
             try:
@@ -155,6 +154,45 @@ class Ui_ReplayView(QtGui.QGraphicsView):
                 #pass
                 print "No connection!"#for test
         self.SetSoldiers(units)
+
+
+
+class UiD_RoundInfo:
+    "info of every round"
+    def __init__(self, bef_units, bef_changes = None,
+                 aft_units = None, cmdEffect = None):
+        self.begChanges = bef_changes
+        self.cmdEffect = cmdEffect
+        self.begUnits = bef_units
+        self.endUnits = aft_units
+    def __repr__():
+        return UiD_RoundInfo(self.begUnits, self.begChanges,
+                             self.cmdEffect, self.endUnits)
+
+    #def ResetRoundBeginInfo(self):
+
+class UiD_BattleData:
+    "info of the entire battle(not completed)"
+    def __init__(self, maps, units):
+        self.map = maps
+        self.roundInfo = []
+        round0Info = UiD_RoundInfo(units)
+        self.roundInfo.append(round0Info)
+
+    def UpdateData(self, cmdEffect, nextUnits):
+        "update the battle info"
+        latestRound = len(self.roundInfo)
+        self.roundInfo[latestRound].cmdEffect = cmdEffect
+        self.roundInfo[latestRound].endUnits = nextUnits
+        nextRoundInfo = UiD_RoundInfo(nextUnits)
+        self.roundInfo.append(nextRoundInfo)
+
+    #def GetRoundIniData(self, roundNum):
+    #def GetRoundCmdData(self, roundNum):
+    #def GetMap(self, roundNum):
+
+    #def ChangeRoundInfo(self, roundNum, begUnits):
+    #def RoundInfoIsChanged(self, roundNum):
 
 
 

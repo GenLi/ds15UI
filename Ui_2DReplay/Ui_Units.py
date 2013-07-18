@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-#Ver 0.3 edited at 2013-07-16-0:50
-#Changes: some unnecessary contents deleted
+#Ver 0.4 edited at 2013-07-16-16:48
+#Changes: cursor class added
 
 #items needed in replay scene
 #grids of map
@@ -18,13 +18,17 @@ UNIT_WIDTH = 100
 UNIT_HEIGHT = 100
 PEN_WIDTH = 0.5
 
+
+LABEL_WIDTH = 100
+LABEL_HEIGHT = 30
+LABEL_LEFT_MARGIN = 20
+
 def GetPos(mapX, mapY):
     return QtCore.QPointF(mapX*UNIT_WIDTH, mapY*UNIT_HEIGHT)
 
 class Ui_MapUnit(QtGui.QGraphicsItem):
     "the unit of the map. Generalized."
     def __init__(self, x, y, terrain, parent = None):
-        "Initialize the flags and position info"
         QtGui.QGraphicsItem.__init__(self, parent)
         self.mapX = x
         self.mapY = y
@@ -65,18 +69,17 @@ class Ui_MapUnit(QtGui.QGraphicsItem):
 class Ui_SoldierUnit(QtGui.QGraphicsItem):
     "the unit of the soldiers. Generalized."
     #def __init__(self, units):
-    def __init__(self, x, y, soldiertype, parent = None):
-        "initialize the flags and map info"
+    def __init__(self, x, y, soldiertype, idNum, parent = None):
         QtGui.QGraphicsItem.__init__(self, parent)
         self.mapX = x
         self.mapY = y
         self.type = soldiertype
+        self.idNum = idNum
         self.selected = False
 
     def SetMapPos(self, x, y):
         self.mapX = x
         self.mapY = y
-
     def GetPos(self):
         return GetPos(self.mapX, self.mapY)
 
@@ -98,6 +101,76 @@ class Ui_SoldierUnit(QtGui.QGraphicsItem):
         painter.setCompositionMode(painter.CompositionMode_Multiply)
         painter.drawImage(QtCore.QRectF(0, 0, UNIT_WIDTH, UNIT_HEIGHT), image)
 
+    #slots for creating animation
+    def FadeOut(self, time):
+        print time#for test
+        self.setOpacity(1-time)
+    #def Flicker(self, frame):
 
+
+class Ui_GridLabel(QtGui.QGraphicsItem):
+    "used to show info on map grids"
+    def __init__(self, text, mapX, mapY, parent = None):
+        QtGui.QGraphicsItem.__init__(self, parent)
+        self.text = text
+        self.mapX = mapX
+        self.mapY = mapY
+
+    def boundingRect(self):
+        return QtCore.QRectF(LABEL_LEFT_MARGIN-PEN_WIDTH, 0-LABEL_HEIGHT-PEN_WIDTH,
+                             LABEL_WIDTH+PEN_WIDTH, LABEL_HEIGHT+PEN_WIDTH)
+        #regard the downleft corner as origin
+
+    def paint(self, painter, option, widget):
+        font = QtGui.QFont("Times New Roman", 20)
+        #font.setColor(QtGui.QColor(0, 0, 0))
+        painter.setFont(font)
+        #painter.setColor(QtGui.QColor(0, 0, 0))
+        painter.drawText(QtCore.QPointF(LABEL_LEFT_MARGIN, 0), self.text)
+        
+
+class Ui_GridCursor(QtCore.QObject, QtGui.QGraphicsItem):
+    def __init__(self):
+        QtCore.QObject.__init__(self)
+        QtGui.QGraphicsItem.__init__(self)
+
+        self.isFixed = False #show whether the cursor should stop frickering 
+        FRICKCERING_PERIOD = 500
+        self.timerId = self.startTimer(FRICKERING_PERIOD)
+
+    def timerEvent(self, event):
+        if (event.timerId() = self.timerId):
+            self.setOpacity(1-self.opacity()) #make the cursor fricker
+        if (self.fixed):
+            self.setOpacity(1)
+
+    def boundingRect(self):
+        return QtCore.QRectF(0-PEN_WIDTH, 0-PEN_WIDTH,
+                             UNIT_WIDTH+PEN_WIDTH, UNIT_HEIGHT+PEN_WIDTH)
+
+    def paint(self, painter, option, widget):
+        pen = QtGui.QPen()
+        pen.setWidth(5)
+        pen.setCapStyle(QtCore.Qt.FlatCap)
+        painter.setPen(pen)
+
+        RMARGIN = 0.05 #rate of margin
+        RLINE = 0.4 #rate of line
+        painter.drawLine(QtCore.QPointF(RMARGIN*UNIT_WIDTH, RMARGIN*UNIT_HEIGHT),
+                         QtCore.QPointF(RMARGIN*UNIT_WIDTH, RLINE*UNIT_HEIGHT))
+        painter.drawLine(QtCore.QPointF(RMARGIN*UNIT_WIDTH, RMARGIN*UNIT_HEIGHT),
+                         QtCore.QPointF(RLINE*UNIT_WIDTH, RMARGIN*UNIT_HEIGHT))
+        painter.drawLine(QtCore.QPointF((1-RMAIGIN)*UNIT_WIDTH, RMARGIN*UNIT_HEIGHT),
+                         QtCore.QPointF((1-RMARGIN)*UNIT_WIDTH, RLINE*UNIT_HEIGHT))
+        painter.drawLine(QtCore.QPointF((1-RMARGIN)*UNIT_WIDTH, RMARGIN*UNIT_HEIGHT),
+                         QtCore.QPointF((1-RLINE)*UNIT_WIDTH, RMARGIN*UNIT_HEIGHT))
+        painter.drawLine(QtCore.QPointF(RMARGIN*UNIT_WIDTH, (1-RMARGIN)*UNIT_HEIGHT),
+                         QtCore.QPointF(RMAIGIN*UNIT_WIDTH, (1-RLINE)*UNIT_HEIGHT))
+        painter.drawLine(QtCore.QPointF(RMARGIN*UNIT_WIDTH, (1-RMARGIN)*UNIT_HEIGHT),
+                         QtCore.QPointF(RLINE*UNIT_WIDTH, (1-RMARGIN)*UNIT_HEIGHT))
+        painter.drawLine(QtCore.QPointF((1-RMARGIN)*UNIT_WIDTH, (1-RMARGIN)*UNIT_HEIGHT),
+                         QtCore.QPointF((1-RMARGIN)*UNIT_WIDTH, (1-RLINE)*UNIT_HEIGHT))
+        painter.drawLine(QtCore.QPointF((1-RMARGIN)*UNIT_WIDTH, (1-RMARGIN)*UNIT_HEIGHT),
+                         QtCore.QPointF((1-RLINE)*UNIT_WIDTH, (1-RMARGIN)*UNIT_HEIGHT))
 
 
