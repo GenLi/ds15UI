@@ -20,6 +20,7 @@ class ai_debugger(QMainWindow):
         self.loaded_map = None
         self.replay_speed = MIN_REPLAY_SPEED
         self.pausepoints = []
+        self.ispaused = False
         #temporary label
         self.replay_label = QLabel()
         self.replay_label.setMinimumSize(250, 250)
@@ -44,28 +45,27 @@ class ai_debugger(QMainWindow):
 
         #creat game actions
 
-        gameStartAction = self.createAction("&Start", self.startGame,
+        self.gameStartAction = self.createAction("&Start", self.startGame,
                                             "Ctrl+S","gameStart",
                                             "start game")
-        gamePauseAction = self.createAction("&Pause", self.pauseGame,
+        self.gamePauseAction = self.createAction("&Pause", self.pauseGame,
                                             "Ctrl+P","gamePause",
                                             "pause game",True)
-        gameEndAction = self.createAction("&End", self.endGame,
+        self.gameEndAction = self.createAction("&End", self.endGame,
                                          "Ctrl+E","gameEnd",
                                          "end game")
-        gameLoadAction1 = self.createAction("Load &AI", self.loadAIdlg,
+        self.gameLoadAction1 = self.createAction("Load &AI", self.loadAIdlg,
                                           "Ctrl+A", "loadAI",
                                           "load AI")
-        gameLoadAction2 = self.createAction("Load &MAP", self.loadMapdlg,
+        self.gameLoadAction2 = self.createAction("Load &MAP", self.loadMapdlg,
                                            "Ctrl+M", "loadMap",
                                            "load MAP")
-        gameEndAction.setEnabled(self.started)
 
         #creat game menu and add actions
         self.gameMenu = self.menuBar().addMenu("&Game")
-        self.addActions(self.gameMenu, (gameStartAction, gamePauseAction,
-                                  gameEndAction, None, gameLoadAction1,
-                                        gameLoadAction2))
+        self.addActions(self.gameMenu, (self.gameStartAction, self.gamePauseAction,
+                                  self.gameEndAction, None, self.gameLoadAction1,
+                                        self.gameLoadAction2))
 
         #creat actions and add them to config menu
         self.configMenu = self.menuBar().addMenu("&Config")
@@ -122,8 +122,8 @@ class ai_debugger(QMainWindow):
         #creat toolbars and add actions
 
         gameToolbar =  self.addToolBar("Game")
-        self.addActions(gameToolbar, (gameStartAction, gamePauseAction,
-                                  gameEndAction, gameLoadAction1, gameLoadAction2))
+        self.addActions(gameToolbar, (self.gameStartAction, self.gamePauseAction,
+                                  self.gameEndAction, self.gameLoadAction1, self.gameLoadAction2))
         configToolbar = self.addToolBar("Config")
         self.addActions(configToolbar, (run_modeAction, debug_modeAction,
                                         None, continue_modeAction,
@@ -136,11 +136,11 @@ class ai_debugger(QMainWindow):
 
     #    self.speed_slider = QSlider()
    #     self.speed_slider.setRange(MIN_REPLAY_SPEED, MAX_REPLAY_SPEED)
-
+        self.updateUi()
         self.setWindowTitle("DS15_AIDebugger")
 
 
-        
+
     #wrapper function for reducing codes
     def createAction(self, text, slot=None, shortcut=None, icon=None,
                      tip=None, checkable=False, signal="triggered()"):
@@ -158,7 +158,6 @@ class ai_debugger(QMainWindow):
             action.setCheckable(True)
         return action
 
-
     def addActions(self, target, actions):
         for action in actions:
             if action is None:
@@ -166,15 +165,37 @@ class ai_debugger(QMainWindow):
             else:
                 target.addAction(action)
 
+    def updateUi(self):
+        if self.loaded_ai and self.loaded_map:
+            if not self.started:
+                self.gameStartAction.setEnabled(True)
+                self.gamePauseAction.setEnabled(False)
+                self.gameEndAction.setEnabled(False)
+                self.gameLoadAction1.setEnabled(True)
+                self.gameLoadAction2.setEnabled(True)
+            else:
+                self.gameStartAction.setEnabled(False)
+                self.gamePauseAction.setEnabled(True)
+                self.gameEndAction.setEnabled(True)
+                self.gameLoadAction1.setEnabled(False)
+                self.gameLoadAction2.setEnabled(False)
+        else:
+            self.gameStartAction.setEnabled(False)
+            self.gamePauseAction.setEnabled(False)
+            self.gameEndAction.setEnabled(False)
+            self.gameLoadAction1.setEnabled(True)
+            self.gameLoadAction2.setEnabled(True)
     #game operation slot
     def startGame(self):
-        pass
+        self.started = True
+        self.updateUi()
 
     def pauseGame(self):
         pass
 
     def endGame(self):
-        pass
+        self.started = False
+        self.updateUi()
 
     def loadAIdlg(self):
         dir = r"./FileAI"
@@ -182,11 +203,12 @@ class ai_debugger(QMainWindow):
                                                     "load AI File", dir,
                                                     "AI files (%s)" % "*.exe"))
         if fname and fname != self.loaded_ai:
-            print fname
             if self.loadAI(fname):
                 self.loaded_ai = fname
+                self.infoWidget.setAiFileinfo(fname)
+                self.updateUi()
             else:
-                m = QMessageBox.warning(self, "Error", "Failed to load the AI file %s"
+                QMessageBox.critical(self, "Error", "Failed to load the AI file %s"
                                      %fname, QMessageBox.Ok, QMessageBox.NoButton)
     def loadMapdlg(self):
         dir = r"./FileMap"
@@ -194,19 +216,18 @@ class ai_debugger(QMainWindow):
                                                     "load Map File", dir,
                                                     "Map files (%s)" % "*.map"))
         if fname and fname != self.loaded_map:
-            print fname
             if self.loadAI(fname):
                 self.loaded_map = fname
+                self.infoWidget.setMapFileinfo(fname)
+                self.updateUi()
             else:
-                m = QMessageBox.warning(self, "Error", "Failed to load the Map file %s"
+                QMessageBox.critical(self, "Error", "Failed to load the Map file %s"
                                      %fname, QMessageBox.Ok, QMessageBox.NoButton)
 
-    def loadAI(self, fname):
-        return False
-
+    def loadAI(self, name):
+        return True
     def loadMap(self, fname):
-        return False
-    
+        return True
     def setRunMode(self):
         pass
 
