@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #Ver 0.5 edited at 2013-07-17-21:00
 #Changes: a frame of data of battles

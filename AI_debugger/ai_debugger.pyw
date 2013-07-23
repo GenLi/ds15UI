@@ -112,13 +112,13 @@ class ai_debugger(QMainWindow):
                                  (discon_modeAction, False))
         #creat action and add it to window menu
 
-        dockAction = self.createAction("(dis/en)able infos", self.setInfoWidget,
+        self.dockAction = self.createAction("(dis/en)able infos", self.setInfoWidget,
                                        tip = "enable/disable info dock-widget",
                                        checkable = True,
                                        signal = "toggled(bool)")
         self.windowMenu = self.menuBar().addMenu("&Window")
-        self.windowMenu.addAction(dockAction)
-        dockAction.setChecked(True)
+        self.windowMenu.addAction(self.dockAction)
+        self.dockAction.setChecked(True)
         #creat toolbars and add actions
 
         gameToolbar =  self.addToolBar("Game")
@@ -131,7 +131,7 @@ class ai_debugger(QMainWindow):
                                         resetAction))
 
 
-
+        self.connect(self.infoWidget, SIGNAL("hided()"), self.synhide)
 
 
     #    self.speed_slider = QSlider()
@@ -239,10 +239,14 @@ class ai_debugger(QMainWindow):
 
     def setDisconMode(self):
         pass
-    
+
     def reset(self):
         pass
 
+#to avoid little problem:the check state of dock action syn with closeevent of infoWdiget
+    def synhide(self):
+        self.dockAction.setChecked(False)
+        self.info_visible = False
     def setInfoWidget(self):
         if (self.info_visible):
             self.infoDockWidget.close()

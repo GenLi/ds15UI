@@ -55,5 +55,7 @@ class InfoWidget(QWidget):
 
     #reimplement close event:just set invisible
     def closeEvent(self, event):
-        self.setVisible(False)
+        self.hide()
         event.ignore()
+    def hideEvent(self, event):
+        self.emit(SIGNAL("hided()"))

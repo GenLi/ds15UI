@@ -1,0 +1,12 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+<file alias="saber.png">SoldierImage/saber.png</file>
+<file alias="lancer.png">SoldierImage/lancer.png</file>
+<file alias="archer.png">SoldierImage/archer.png</file>
+<file alias="dragonrider.png">SoldierImage/dragonrider.png</file>
+<file alias="warrior.png">SoldierImage/warrior.png</file>
+<file alias="wizard.png">SoldierImage/wizard.png</file>
+<file alias="hero1.png">SoldierImage/hero1.png</file>
+
+</qresource>
+</RCC>

@@ -9,7 +9,7 @@
 
 from PyQt4 import QtGui, QtCore
 from basic import *
-
+import qrc_resources
 TRAP_TRIGGERED = 8
 
 
@@ -69,12 +69,12 @@ class Ui_MapUnit(QtGui.QGraphicsItem):
 class Ui_SoldierUnit(QtGui.QGraphicsItem):
     "the unit of the soldiers. Generalized."
     #def __init__(self, units):
-    def __init__(self, x, y, soldiertype, idNum, parent = None):
+    def __init__(self, x, y, soldiertype, parent = None):
         QtGui.QGraphicsItem.__init__(self, parent)
         self.mapX = x
         self.mapY = y
         self.type = soldiertype
-        self.idNum = idNum
+    #    self.idNum = idNum
         self.selected = False
 
     def SetMapPos(self, x, y):
@@ -96,8 +96,7 @@ class Ui_SoldierUnit(QtGui.QGraphicsItem):
                      WARRIOR:"warrior.png",
                      WIZARD:"wizard.png",
                      HERO_1:"hero1.png"}
-        fileRoute = "SoldierImage\\"
-        image = QtGui.QImage(fileRoute+imageRoute[self.type])
+        image = QtGui.QImage(":/%s" %imageRoute[self.type])
         painter.setCompositionMode(painter.CompositionMode_Multiply)
         painter.drawImage(QtCore.QRectF(0, 0, UNIT_WIDTH, UNIT_HEIGHT), image)
 
@@ -135,11 +134,11 @@ class Ui_GridCursor(QtCore.QObject, QtGui.QGraphicsItem):
         QtGui.QGraphicsItem.__init__(self)
 
         self.isFixed = False #show whether the cursor should stop frickering 
-        FRICKCERING_PERIOD = 500
+        FRICKERING_PERIOD = 500
         self.timerId = self.startTimer(FRICKERING_PERIOD)
 
     def timerEvent(self, event):
-        if (event.timerId() = self.timerId):
+        if (event.timerId() == self.timerId):
             self.setOpacity(1-self.opacity()) #make the cursor fricker
         if (self.fixed):
             self.setOpacity(1)
