@@ -1,7 +1,9 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#Ver 0.5 edited at 2013-07-17-21:00
-#Changes: a frame of data of battles
+#Ver 0.6.3 edited at 2013-07-23-19:54
+#Changes: type of data changed
+#Changes: change the two-dimen array into a one-dimen one(OK)
+#Changes: initialization
+#need to change: make the cursor fixed when playing
 
 #scene, view of replay
 
@@ -29,8 +31,23 @@ route = ((0, 0), (0, 1), (1, 1), (1, 2), (1, 3))
 
 class Ui_ReplayView(QtGui.QGraphicsView):
     "the replay graphic view"
-    def __init__(self, scene, maps, units, parent = None):
-        QtGui.QGraphicsView.__init__(self, scene)
+    def __init__(self, scene, parent = None):
+        QtGui.QGraphicsView.__init__(self, scene, parent)
+        self.mapItem = []
+        self.soldierItem = []
+        self.soldierAlive = []
+        #ini of items
+        fricker = self.startTimer(300) #the period of the cursor frickering
+        self.cursor = Ui_GridCursor(fricker)
+        scene.addItem(self.cursor)
+        #ini of the cursor
+        self.movTimeline = QtCore.QTimeLine()
+        self.atkTimeline = QtCore.QTimeLine()
+        self.dieTimeline = QtCore.QTimeLine()
+        self.animation = QtGui.QGraphicsItemAnimation()
+        self.label = Ui_GridLabel("", 0, 0)
+        #ini of the animation
+    def Initialize(self, maps, units, side0 = 0, parent = None):
         self.mapItem = []
         for i in range(len(maps)):
             newColumn = []
@@ -44,28 +61,36 @@ class Ui_ReplayView(QtGui.QGraphicsView):
                 self.mapItem[i][j].setPos(GetPos(i, j))
         #initialization of map units
         self.soldierItem = []
-        for unit in units:
-            newSoldierUnit = Ui_SoldierUnit(unit.x, unit.y, unit.type)
+        self.soldierAlive = []
+        for i in range(len(units)):
+            side = 0
+            if (i>=side0):
+                side = 1
+            newSoldierUnit = Ui_SoldierUnit(units[i].x, units[i].y,
+                                            units[i].type, side, i)
             scene.addItem(newSoldierUnit)
             self.soldierItem.append(newSoldierUnit)
+            self.soldierAlive.append(True)
         self.SetSoldiers(units)
         #initialization of soldier units
+        self.setMouseTracking(True)#for test
         #initialization of the cursor
-        self.movTimeline = QtCore.QTimeLine()
-        self.atkTimeline = QtCore.QTimeLine()
-        self.dieTimeline = QtCore.QTimeLine()
-        self.animation = QtGui.QGraphicsItemAnimation()
-        self.label = Ui_GridLabel("", 0, 0)
-        #animation
 
     def SetSoldiers(self, units):
         "set the pos of soldiers"
-        #what if a soldier dies??
+        alive = map(lambda unit: (unit.life==0), units)
         for i in range(len(units)):
-            self.soldierItem[i].setPos(GetPos(units[i].x, units[i].y))
-            self.soldierItem[i].mapX, self.soldierItem[i].mapY = \
+            if (alive[i]!=self.soldierAlive[i] && alive[i]):
+                self.scene().addItem(self.soldierItem[i])
+            if (alive[i]!=self.soldierAlive[i] && !alive[i]):
+                self.scene().removeItem(self.soldierItem[i])
+            self.soldierAlive[i] = alive[i]
+            if (self.soldierAlive[i]):
+                self.soldierItem[i].setPos(GetPos(units[i].x, units[i].y))
+                self.soldierItem[i].mapX, self.soldierItem[i].mapY = \
                                       units[i].x, units[i].y
 
+    #animation
     def MovingAnimation(self, idnum, route):
         "moving animation, displayed when the soldier moves"
         TIME_PER_FRAME = 1000#ms, one-step movement in a frame
@@ -142,7 +167,8 @@ class Ui_ReplayView(QtGui.QGraphicsView):
 
     #def TerrainChangeAnimation(self):
 
-    def TerminateAnimation(self, units):
+    #cursor
+    def TerminateAnimation(self, units = None):
         "stop the animation and rearrange the units. \
         it should be called after an naimation."
         animTimeline = [self.movTimeline, self.atkTimeline, self.dieTimeline]
@@ -154,39 +180,67 @@ class Ui_ReplayView(QtGui.QGraphicsView):
             except TypeError:
                 #pass
                 print "No connection!"#for test
-        self.SetSoldiers(units)
+        if (units):
+            self.SetSoldiers(units)#?
+
+    #cursor
+    def timerEvent(self, event):
+        if (event.timerId()==self.cursor.timerId):
+            self.cursor.setOpacity(1-self.cursor.opacity()) #make the cursor fricker
+        if (self.cursor.isFixed):
+            self.cursor.setOpacity(1)
+    def mouseMoveEvent(self, event):
+        #bug: not the scene position!
+        #bug: need to restrict the cursor in the scene!
+        x = int(event.x()/UNIT_WIDTH)
+        y = int(event.y()/UNIT_HEIGHT)
+        self.cursor.setPos(GetPos(x, y))
+    def mousePressEvent(self, event):
 
 
+class UiD_BeginChanges:
+    def __init__(self, beginInfo, cmd, endInfo):
+        self.templeRenew = None#
+
+class UiD_EndChanges:
+    def __init__(self, begInfo, cmd, endInfo):
+        self.route = fun()#
+        self.order = cmd.order
+        target = self.target = cmd.target[0]*len(endInfo.base[0])+cmd.target[1]
+        idNum = self.idNum = begInfo.id[0]*len(endInfo.base[0])+begInfo.id[1]
+        self.damage = (endInfo.base[idNum].life-begInfo.base[idNum].life,
+                       endInfo.base[target].life-begInfo.base[target].life) #(self, enemy)
+        self.note = ["", ""]
+        for i in range(2):
+            if (self.damage[i]==0):
+                if (endInfo.attack_effect):
+                    self.note[i] = "Blocked!"
+                else:
+                    self.note[i] = "Miss"
+        self.fightBack = #
+        self.isDead = (endInfo.base[idNum].life==0, endInfo.base[target].life==0)
 
 class UiD_RoundInfo:
     "info of every round"
-    def __init__(self, bef_units, bef_changes = None,
-                 aft_units = None, cmdEffect = None):
-        self.begChanges = bef_changes
-        self.cmdEffect = cmdEffect
-        self.begUnits = bef_units
-        self.endUnits = aft_units
-    def __repr__():
-        return UiD_RoundInfo(self.begUnits, self.begChanges,
-                             self.cmdEffect, self.endUnits)
-
-    #def ResetRoundBeginInfo(self):
+    def __init__(self, begInfo, cmd, endInfo):
+        self.begChanges = UiD_BeginChanges(begInfo, cmd, endInfo)
+        self.cmdChanges = UiD_EndChanges(begInfo, cmd, endInfo)
+        self.begUnits = None #if it is none, there's no changes in the unit info
+        self.endUnits = endInfo.base[0]
+        self.endUnits.extend(endInfo.base[1])
+        self.idNum = begInfo.id[0]*len(endInfo.base[0])+begInfo.id[1]
+        self.score = endInfo.score
 
 class UiD_BattleData:
     "info of the entire battle(not completed)"
-    def __init__(self, maps, units):
-        self.map = maps
+    def __init__(self, iniInfo, begInfo):
+        self.map = iniInfo.map
+        self.side0SoldierNum = len(iniInfo.base[0])
+        self.iniUnits = iniInfo.base[0]
+        self.iniUnits.extend(iniInfo.base[1])
         self.roundInfo = []
-        round0Info = UiD_RoundInfo(units)
-        self.roundInfo.append(round0Info)
-
-    def UpdateData(self, cmdEffect, nextUnits):
-        "update the battle info"
-        latestRound = len(self.roundInfo)
-        self.roundInfo[latestRound].cmdEffect = cmdEffect
-        self.roundInfo[latestRound].endUnits = nextUnits
-        nextRoundInfo = UiD_RoundInfo(nextUnits)
-        self.roundInfo.append(nextRoundInfo)
+        self.nextRoundInfo = begInfo #temporary stores the round_begin_info
+        self.result = None#
 
     #def GetRoundIniData(self, roundNum):
     #def GetRoundCmdData(self, roundNum):
@@ -206,9 +260,7 @@ if __name__=="__main__":
     view.show()
     print view.soldierItem[1].mapX, view.soldierItem[1].mapY#for test
     view.MovingAnimation(1, route)#for test
-    view.TerminateAnimation(units)#for test
-    print view.movTimeline.state()#for test
-    print view.soldierItem[1].mapX, view.soldierItem[1].mapY#for test
+    #view.TerminateAnimation(units)#for test
     #view.AttackingAnimation(0, 3, -20, "Blocked")#for test
     #view.DiedAnimation(0)#for test
     sys.exit(app.exec_())
