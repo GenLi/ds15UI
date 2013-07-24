@@ -9,7 +9,7 @@
 
 from PyQt4 import QtGui, QtCore
 from basic import *
-
+import qrc_resources
 TRAP_TRIGGERED = 8
 
 
@@ -96,8 +96,7 @@ class Ui_SoldierUnit(QtGui.QGraphicsItem):
                      WARRIOR:"warrior.png",
                      WIZARD:"wizard.png",
                      HERO_1:"hero1.png"}
-        fileRoute = "SoldierImage\\"
-        image = QtGui.QImage(fileRoute+imageRoute[self.type])
+        image = QtGui.QImage(":/%s" %imageRoute[self.type])
         painter.setCompositionMode(painter.CompositionMode_Multiply)
         painter.drawImage(QtCore.QRectF(0, 0, UNIT_WIDTH, UNIT_HEIGHT), image)
 

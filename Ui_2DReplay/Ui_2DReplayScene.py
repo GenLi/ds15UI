@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #Ver 0.6.3 edited at 2013-07-23-19:54
 #Changes: type of data changed
@@ -80,9 +81,9 @@ class Ui_ReplayView(QtGui.QGraphicsView):
         "set the pos of soldiers"
         alive = map(lambda unit: (unit.life==0), units)
         for i in range(len(units)):
-            if (alive[i]!=self.soldierAlive[i] && alive[i]):
+            if (alive[i]!=self.soldierAlive[i] and alive[i]):
                 self.scene().addItem(self.soldierItem[i])
-            if (alive[i]!=self.soldierAlive[i] && !alive[i]):
+            if (alive[i]!=self.soldierAlive[i] and not alive[i]):
                 self.scene().removeItem(self.soldierItem[i])
             self.soldierAlive[i] = alive[i]
             if (self.soldierAlive[i]):
@@ -196,7 +197,7 @@ class Ui_ReplayView(QtGui.QGraphicsView):
         y = int(event.y()/UNIT_HEIGHT)
         self.cursor.setPos(GetPos(x, y))
     def mousePressEvent(self, event):
-
+        pass
 
 class UiD_BeginChanges:
     def __init__(self, beginInfo, cmd, endInfo):
