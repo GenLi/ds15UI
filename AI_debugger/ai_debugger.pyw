@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys
@@ -131,11 +132,11 @@ class ai_debugger(QMainWindow):
 
 
         self.connect(self.infoWidget, SIGNAL("hided()"), self.synhide)
+        #to show messages
         self.connect(self.replayWidget.2DreplayWidget, SIGNAL("unitSelected(basic.Base_Unit)"),
                      self.infoWidget, SLOT("newUnitInfo(basic.Base_Unit)"))
         self.connect(self.replayWidget.2DreplayWidget, SIGNAL("mapGridSelected(basic.Map_Basic)"),
                      self.infoWidget, SIGNAL("newMapInfo(basic.Map_Basic)"))
-
     #    self.speed_slider = QSlider()
    #     self.speed_slider.setRange(MIN_REPLAY_SPEED, MAX_REPLAY_SPEED)
         self.updateUi()

@@ -1,13 +1,16 @@
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-import basic
+#import basic
 
+#two dictionaries for show types of map or unit
 NumToMapType = {0:"PLAIN",1:"MOUNTAIN",2:"FOREST",3:"BARRIER",4:"TURRET",
                  5:"TRAP",6:"TEMPLE",7:"GEAR"}
 NumToUnitType = {0:"SABER",1:"LANCER",2:"ARCHER",3:"DRAGON RIDER",
                 4:"WARRIOR", 5:"WIZARD", 6:"HERO_1", 7:"HERO_2",
                 8:"HERO_3"}
+
 class InfoWidget(QTabWidget):
     def __init__(self, parent =None):
         super(InfoWidget, self).__init__(parent)
@@ -30,10 +33,13 @@ class InfoWidget(QTabWidget):
         self.emit(SIGNAL("hided()"))
 
     def newGameInfo(self, _round, round_info):
+        self.sender = self.sender()
         self.infoWidget_Game.setRoundInfo(_round)
-       
+
+        if self.sender == None:
+            pass
         #待实现,1在跳转回合时从回放里设置的类传出的信号设置,2从平台获取最新信息时
-        ##根据得到的类们设置。
+        ##根据得到的类们设置。需要分开吗???
     def newUnitInfo(self, base_unit):
         self.infoWidget_Unit.info_type.setText(NumToUnitType[base_unit.kind])
         self.infoWidget_Unit.info_life.setText("%d" %base_unit.life)
@@ -42,12 +48,16 @@ class InfoWidget(QTabWidget):
         self.infoWidget_Unit.info_speed.setText("%d" %base_unit.speed)
         self.infoWidget_Unit.info_moverange.setText("%d" %base_unit.move_range)
         self.infoWidget_Unit.info_attackrange.setText("%s" %base_unit.attack_range)
-        self.setCurrentWidget(infoWidget_Unit)
+        self.setCurrentWidget(self.infoWidget_Unit)
     def newMapInfo(self, map_basic):
         self.infoWidget_Map.info_type.setText(NumToMapType[map_basic.kind])
         self.infoWidget_Map.info_score.setText("%d" %map_basic.score)
         self.infoWidget_Mao.info_consumption.setText("%d" %map_basic.move_consumption)
-        self.setCurrentWidget(infoWidget_Map)
+        self.setCurrentWidget(self.infoWidget_Map)
+    def offSelected(self):
+        self.infoWidget_Map.infoReset()
+        self.infoWidget_Unit.infoReset()
+        self.setCurrentWidget(self.infoWidget_Game)
 
 class InfoWidget1(QWidget):
     def __init__(self, parent = None):
@@ -68,7 +78,7 @@ class InfoWidget1(QWidget):
         self.label_time = QLabel("time used:")
         self.info_time = QLineEdit("")
         self.info_time.setReadOnly(True)
-        self.label_cmd = QLabel("order:")
+        self.label_cmd = QLabel("command:")
         self.info_cmd = QLineEdit("")
         self.info_cmd.setReadOnly(True)
 
@@ -105,31 +115,34 @@ class InfoWidget1(QWidget):
 class InfoWidget2(QWidget):
     def __init__(self, parent = None):
         super(InfoWidget2, self).__init__(parent)
-
+        self.infos = []
    #     self.label_id = QLabel("unit id:")
     #    self.info_id = QLabel("")
-     #   self.info_id.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+     #   self.info_id.setFrameStyle(QFrame.StyledPanel|QFrame.Sunken)
         self.label_type = QLabel("unit type:")
         self.info_type = QLabel("")
-        self.info_type.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_type)
         self.label_life = QLabel("unit life:")
         self.info_life= QLabel("")
-        self.info_life.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_life)
         self.label_attack = QLabel("attack:")
         self.info_attack = QLabel("")
-        self.info_attack.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_attack)
         self.label_speed = QLabel("speed:")
         self.info_speed = QLabel("")
-        self.info_speed.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_speed)
         self.label_defence = QLabel("defence:")
         self.info_defence = QLabel("")
-        self.info_defence.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_defence)
         self.label_moverange = QLabel("move range:")
         self.info_moverange = QLabel("")
-        self.info_moverange.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_moverange)
         self.label_attackrange = QLabel("attack range:")
         self.info_attackrange = QLabel("")
-        self.info_attackrange.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_attackrange)
+
+        for info in self.infos:
+            info.setFrameStyle(QFrame.StyledPanel|QFrame.Sunken)
 
         self.layout = QGridLayout()
         self.layout.addWidget(self.label_type, 0, 0)
@@ -149,19 +162,26 @@ class InfoWidget2(QWidget):
 
         self.setLayout(self.layout)
 
+    def infoReset(self):
+        for info in self.infos:
+            info.setText("")
+
 class InfoWidget3(QWidget):
     def __init__(self, parent = None):
         super(InfoWidget3, self).__init__(parent)
-
+        self.infos = []
         self.label_type = QLabel("map type:")
         self.info_type = QLabel("")
-        self.info_type.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_type)
         self.label_score = QLabel("map score:")
         self.info_score= QLabel("")
-        self.info_score.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_score)
         self.label_consumption = QLabel("move consumption:")
         self.info_consumption = QLabel("")
-        self.info_consumption.setStyle(QFrame.StyledPanel|QFrame.Sunken)
+        self.infos.append(self.info_consumption)
+
+        for info in self.infos:
+            info.setFrameStyle(QFrame.StyledPanel|QFrame.Sunken)
 
         self.layout = QGridLayout()
         self.layout.addWidget(self.label_type, 0, 0)
@@ -172,3 +192,15 @@ class InfoWidget3(QWidget):
         self.layout.addWidget(self.info_consumption, 2, 1)
 
         self.setLayout(self.layout)
+
+    def infoReset(self):
+        for info in self.infos:
+            info.setText("")
+
+#just for test
+if __name__ == "__main__":
+    import sys
+    app = QApplication(sys.argv)
+    form = InfoWidget()
+    form.show()
+    app.exec_()
