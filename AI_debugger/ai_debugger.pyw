@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-
+# -*- coding: UTF-8 -*-
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys
 from info_widget import *
 import qrc_resource
+from AI_2DReplayWidget import *
 
 RUN_MODE = 0
 DEBUG_MODE = 1
-MAX_REPLAY_SPEED = 100
-MIN_REPLAY_SPEED = 1
+
 
 class ai_debugger(QMainWindow):
     def __init__(self, parent = None):
@@ -18,13 +18,12 @@ class ai_debugger(QMainWindow):
         self.started = False
         self.loaded_ai = None
         self.loaded_map = None
-        self.replay_speed = MIN_REPLAY_SPEED
+      #  self.replay_speed = MIN_REPLAY_SPEED
         self.pausepoints = []
         self.ispaused = False
-        #temporary label
-        self.replay_label = QLabel()
-        self.replay_label.setMinimumSize(250, 250)
-        self.setCentralWidget(self.replay_label)
+        #composite replay widget
+        self.replayScene = QGraphicsScene()
+        self.replayWidget = AI_2DReplayWidget(self.replayScene)
 
         #add a dock widget to show infomations of the running AI and loaded files
 
@@ -132,7 +131,10 @@ class ai_debugger(QMainWindow):
 
 
         self.connect(self.infoWidget, SIGNAL("hided()"), self.synhide)
-
+        self.connect(self.replayWidget.2DreplayWidget, SIGNAL("unitSelected(basic.Base_Unit)"),
+                     self.infoWidget, SLOT("newUnitInfo(basic.Base_Unit)"))
+        self.connect(self.replayWidget.2DreplayWidget, SIGNAL("mapGridSelected(basic.Map_Basic)"),
+                     self.infoWidget, SIGNAL("newMapInfo(basic.Map_Basic)"))
 
     #    self.speed_slider = QSlider()
    #     self.speed_slider.setRange(MIN_REPLAY_SPEED, MAX_REPLAY_SPEED)
