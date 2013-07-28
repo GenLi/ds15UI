@@ -168,6 +168,7 @@ class ai_debugger(QMainWindow):
             else:
                 target.addAction(action)
 
+    #enable/disable actions according to the game status
     def updateUi(self):
         if self.loaded_ai and self.loaded_map:
             if not self.started:
@@ -208,7 +209,7 @@ class ai_debugger(QMainWindow):
         if fname and fname != self.loaded_ai:
             if self.loadAI(fname):
                 self.loaded_ai = fname
-                self.infoWidget.setAiFileinfo(fname)
+                self.infoWidget.infoWidget_Game.setAiFileinfo(fname)
                 self.updateUi()
             else:
                 QMessageBox.critical(self, "Error", "Failed to load the AI file %s"
@@ -221,14 +222,16 @@ class ai_debugger(QMainWindow):
         if fname and fname != self.loaded_map:
             if self.loadAI(fname):
                 self.loaded_map = fname
-                self.infoWidget.setMapFileinfo(fname)
+                self.infoWidget.infoWidget_Game.setMapFileinfo(fname)
                 self.updateUi()
             else:
                 QMessageBox.critical(self, "Error", "Failed to load the Map file %s"
                                      %fname, QMessageBox.Ok, QMessageBox.NoButton)
 
+    #传递ai文件路径给平台,失败返回False
     def loadAI(self, name):
         return True
+    #解析地图文件获得地图列表并传递给平台
     def loadMap(self, fname):
         return True
     def setRunMode(self):
@@ -246,7 +249,6 @@ class ai_debugger(QMainWindow):
     def reset(self):
         pass
 
-#to avoid little problem:the check state of dock action syn with closeevent of infoWdiget
     def synhide(self):
         self.dockAction.setChecked(False)
         self.info_visible = False
@@ -257,6 +259,7 @@ class ai_debugger(QMainWindow):
         else:
             self.infoDockWidget.show()
             self.info_visible = True
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     form = ai_debugger()

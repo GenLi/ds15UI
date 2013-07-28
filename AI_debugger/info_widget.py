@@ -10,7 +10,13 @@ NumToMapType = {0:"PLAIN",1:"MOUNTAIN",2:"FOREST",3:"BARRIER",4:"TURRET",
 NumToUnitType = {0:"SABER",1:"LANCER",2:"ARCHER",3:"DRAGON RIDER",
                 4:"WARRIOR", 5:"WIZARD", 6:"HERO_1", 7:"HERO_2",
                 8:"HERO_3"}
-
+NumToActionType = {0:"待机", 1:"攻击", 2:"技能"}
+StyleSheet = """
+QLineEdit{
+background-color: rgb(255, 255, 127);
+color: darkblue;
+}
+"""
 class InfoWidget(QTabWidget):
     def __init__(self, parent =None):
         super(InfoWidget, self).__init__(parent)
@@ -31,15 +37,26 @@ class InfoWidget(QTabWidget):
         event.ignore()
     def hideEvent(self, event):
         self.emit(SIGNAL("hided()"))
-
-    def newGameInfo(self, _round, round_info):
+    #展现战斗信息
+    def beginRoundInfo(self, beginfo):
+        self.infoWidget_Game.resetEnd()
+        self.infoWidget_Game.setUnitinfo("%s" %beginfo.id)
+        self.beg_Flag = 1
+    def endRoundInfo(self, cmd, endinfo):
+        self.infoWidget_Game.setCmdinfo("move to %s,%s %s" %(cmd.move,
+                                                             NumToActionType[cmd.order],
+                                                             cmd.target))
+        self.infoWidget_Game.setEffectinfo("%s" %endinfo.effect)
+        self.beg_Flag = 0
+    def goToGameInfo(self, _round, round_info):
         self.sender = self.sender()
         self.infoWidget_Game.setRoundInfo(_round)
 
         if self.sender == None:
             pass
         #待实现,1在跳转回合时从回放里设置的类传出的信号设置,2从平台获取最新信息时
-        ##根据得到的类们设置。需要分开吗???
+        ##根据得到的类们设置。(等待gotoround发出信号,以及信息的定义)
+    #展现单位,地形信息
     def newUnitInfo(self, base_unit):
         self.infoWidget_Unit.info_type.setText(NumToUnitType[base_unit.kind])
         self.infoWidget_Unit.info_life.setText("%d" %base_unit.life)
@@ -81,6 +98,9 @@ class InfoWidget1(QWidget):
         self.label_cmd = QLabel("command:")
         self.info_cmd = QLineEdit("")
         self.info_cmd.setReadOnly(True)
+        self.label_effect = QLabel("attack effect:")
+        self.info_effect = QLineEdit("")
+        self.info_effect.setReadOnly(True)
 
         self.layout = QGridLayout()
         self.layout.addWidget(self.label_aifile, 0, 0)
@@ -96,12 +116,16 @@ class InfoWidget1(QWidget):
         self.layout.addWidget(self.info_time, 4, 1)
         self.layout.addWidget(self.label_cmd, 5, 0)
         self.layout.addWidget(self.info_cmd, 5, 1)
+        self.layout.addWidget(self.label_effect, 6, 0)
+        self.layout.addWidget(self.info_effect, 6, 1)
 
         self.setLayout(self.layout)
+        self.setStyleSheet(StyleSheet)
     def setAiFileinfo(self, str):
         self.info_aifile.setText(str)
     def setMapFileinfo(self, str):
         self.info_mapfile.setText(str)
+     #逻辑接口里把回合和单位行动周期搞混了,这个回合是什么呢...
     def setRoundinfo(self, r):
         self.info_round.setText(r)
     def setUnitinfo(self, str):
@@ -110,7 +134,11 @@ class InfoWidget1(QWidget):
         self.info_time.setText(str)
     def setCmdinfo(self, str):
         self.info_cmd.setText(str)
-
+    def setEffectinfo(self,str):
+        self.info_effect.setText(str)
+    def resetEnd(self):
+        self.setEffectinfo("")
+        self.setCmdinfo("")
 
 class InfoWidget2(QWidget):
     def __init__(self, parent = None):
