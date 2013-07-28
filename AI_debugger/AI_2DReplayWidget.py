@@ -2,11 +2,13 @@
 # -*- coding: UTF-8 -*-
 # composite Ui_2DreplayWidget and provide a slider controling the playing
 
-#from Ui_ReplayWidget import *
+
+import sys
+sys.path.append(r"/home/fox/UI_duishi/ds15UI/")
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from functools import partial
-
+from Ui_2DReplay.Ui_ReplayWidget import *
 class CtrlSlider(QWidget):
     XMARGIN = 12.0
     YMARGIN = 5.0
@@ -159,13 +161,13 @@ class CtrlSlider(QWidget):
         painter.drawPolygon(QPolygonF(triangle))
 
 class AI_2DReplayWidget(QWidget):
-    def __init__(self, parent = None):
-        QWidget.__init__(self,parent)
+    def __init__(self, scene, parent = None):
+        QWidget.__init__(self, parent)
 
         self.NowEqualTotal = True
         self.playMode = 0#默认连续播放模式0, 逐回合暂停模式为1
       #  self.TotalStatus = 0#默认在回合开始
-        self.replayWidget = Ui_2DReplayWidget(self, scene, parent)
+        self.replayWidget = Ui_2DReplayWidget(scene, parent)
         #self.replayWidget = QLabel()
         self.ctrlSlider = CtrlSlider()
         self.totalLabel = QLabel("total round:")
@@ -277,6 +279,7 @@ class AI_2DReplayWidget(QWidget):
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    form = AI_2DReplayWidget()
+    scene = QGraphicsScene()
+    form = AI_2DReplayWidget(scene)
     form.show()
     app.exec_()

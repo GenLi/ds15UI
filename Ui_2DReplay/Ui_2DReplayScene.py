@@ -30,7 +30,7 @@ route = ((0, 0), (0, 1), (1, 1), (1, 2), (1, 3))
 
 
 
-class Ui_ReplayView(QtGui.QGraphicsView):
+class Ui_2DReplayView(QtGui.QGraphicsView):
     "the replay graphic view"
     def __init__(self, scene, parent = None):
         QtGui.QGraphicsView.__init__(self, scene, parent)
@@ -218,7 +218,7 @@ class UiD_EndChanges:
                     self.note[i] = "Blocked!"
                 else:
                     self.note[i] = "Miss"
-        self.fightBack = #
+#        self.fightBack = #
         self.isDead = (endInfo.base[idNum].life==0, endInfo.base[target].life==0)
 
 class UiD_RoundInfo:

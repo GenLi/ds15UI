@@ -33,13 +33,13 @@ class Ui_2DReplayWidget(Ui_2DReplayView):
 
     def UpdateBeginData(self, begInfo):
         if (self.data.nextRoundInfo!=None):
-            #error
+            pass#error
         self.data.nextRoundInfo = begInfo
         self.latestRound += 1
         self.latestStatus = BEGIN_FLAG
     def UpdateEndData(self, cmd, endInfo):
         if (self.data.nextRoundInfo==None):
-            #error
+            pass#error
         rInfo = UiD_RoundInfo(self.data.nextRoundInfo, cmd, endInfo)
         self.data.roundInfo.append(rInfo)
         self.data.nextRoundInfo = None
@@ -58,7 +58,7 @@ class Ui_2DReplayWidget(Ui_2DReplayView):
         elif (self.status=="end"):
             units = self.data.roundInfo[self.nowRound].endUnits
         else:
-            #raise TypeError, "Invalid flag when showing status"
+            pass#raise TypeError, "Invalid flag when showing status"
         self.SetSoldier(units)
 
     def ShowMoveAnimation(self, state = None):
@@ -79,7 +79,7 @@ class Ui_2DReplayWidget(Ui_2DReplayView):
         elif (self.animState==AFTER_ATTACK):
             if (move.isDead[1]):
                 self.DieAnimation(self, targetId)
-            else if (move.fightBack):
+            elif (move.fightBack):
                 self.AttackingAnimation(targetId, selfId, move.damage[0], move.note[1])
             self.animState = AFTER_FIGHTING_BACK
         elif (self.animState==AFTER_FIGHTING_BACK and move.isDead[0]):
@@ -94,7 +94,7 @@ class Ui_2DReplayWidget(Ui_2DReplayView):
 
     #def Play(self, r = None, flag = None):
     def Play(self, flag = None):
-
+        pass
     def GoToRound(self, r = None, flag = None):
         "stop the animation and set the round state"
         #Q: what if the round r hasn't been updated?
@@ -119,7 +119,7 @@ class Ui_2DReplayWidget(Ui_2DReplayView):
     moveAnimEnd = QtCore.pyqtSignal(int)
     begAnimEnd = QtCore.pyqtSignal(int)
     #signals of animation
-    unitSelected = QtCore.pyqtSignal(Map_Basic)
-    mapGridSelected = QtCore.pyqtSignal(Base_Unit)
+  #  unitSelected = QtCore.pyqtSignal(Map_Basic)
+#    mapGridSelected = QtCore.pyqtSignal(Base_Unit)
     #signals for info display
     
