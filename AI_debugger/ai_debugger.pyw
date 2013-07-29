@@ -24,7 +24,7 @@ class ai_debugger(QMainWindow):
         self.ispaused = False
         #composite replay widget
         self.replayScene = QGraphicsScene()
-        self.replayWidget = AI_2DReplayWidget(self.replayScene)
+        self.replayWindow = AI_2DReplayWidget(self.replayScene)
 
         #add a dock widget to show infomations of the running AI and loaded files
 
@@ -133,12 +133,13 @@ class ai_debugger(QMainWindow):
 
         self.connect(self.infoWidget, SIGNAL("hided()"), self.synhide)
         #to show messages
-        self.connect(self.replayWidget.2DreplayWidget, SIGNAL("unitSelected(basic.Base_Unit)"),
-                     self.infoWidget, SLOT("newUnitInfo(basic.Base_Unit)"))
-        self.connect(self.replayWidget.2DreplayWidget, SIGNAL("mapGridSelected(basic.Map_Basic)"),
-                     self.infoWidget, SIGNAL("newMapInfo(basic.Map_Basic)"))
-    #    self.speed_slider = QSlider()
-   #     self.speed_slider.setRange(MIN_REPLAY_SPEED, MAX_REPLAY_SPEED)
+        self.connect(self.replayWindow.replayWidget, SIGNAL("unitSelected"),
+                     self.infoWidget, SLOT("newUnitInfo"))
+        self.connect(self.replayWindow.replayWidget, SIGNAL("mapGridSelected"),
+                     self.infoWidget, SLOT("newMapInfo"))
+
+        self.connect(self.replayWindow, SIGNAL("nextRound()"), self.sthread.nextRound)
+        self.connect(self.replayWindow, SIGNAL("pauseRound()"), self.sthread.pauseRound)
         self.updateUi()
         self.setWindowTitle("DS15_AIDebugger")
 
@@ -192,10 +193,11 @@ class ai_debugger(QMainWindow):
     #game operation slot
     def startGame(self):
         self.started = True
+        #这里开一个线程开始交互
         self.updateUi()
 
     def pauseGame(self):
-        pass
+        self.replayWindow.pauseGame()
 
     def endGame(self):
         self.started = False
@@ -234,6 +236,7 @@ class ai_debugger(QMainWindow):
     #解析地图文件获得地图列表并传递给平台
     def loadMap(self, fname):
         return True
+    #给平台发出这种模式信息...
     def setRunMode(self):
         pass
 
@@ -241,10 +244,10 @@ class ai_debugger(QMainWindow):
         pass
 
     def setConMode(self):
-        pass
+        self.replayWindow.setPlayMode(0)
 
     def setDisconMode(self):
-        pass
+        self.replayWindow.setPlayMode(1)
 
     def reset(self):
         pass

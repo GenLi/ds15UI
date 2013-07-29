@@ -3,12 +3,11 @@
 # composite Ui_2DreplayWidget and provide a slider controling the playing
 
 
-import sys
-sys.path.append(r"/home/fox/UI_duishi/ds15UI/")
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from functools import partial
 from Ui_2DReplay.Ui_ReplayWidget import *
+
 class CtrlSlider(QWidget):
     XMARGIN = 12.0
     YMARGIN = 5.0
@@ -166,6 +165,7 @@ class AI_2DReplayWidget(QWidget):
 
         self.NowEqualTotal = True
         self.playMode = 0#默认连续播放模式0, 逐回合暂停模式为1
+        self.isPaused = False
       #  self.TotalStatus = 0#默认在回合开始
         self.replayWidget = Ui_2DReplayWidget(scene, parent)
         #self.replayWidget = QLabel()
@@ -182,9 +182,11 @@ class AI_2DReplayWidget(QWidget):
         self.nextRoundButton = QPushButton("Next Round")
         self.pauseButton = QPushButton("Pause")
         self.playModeLabel = QLabel("Continuous")
+        self.pauseLabel = QLabel("")
         self.playModeLabel.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         self.nowStatusInfo.setSizePolicy(QSizePolicy(QSizePolicy.Fixed|QSizePolicy.Fixed))
         self.totalStatusInfo.setSizePolicy(QSizePolicy(QSizePolicy.Fixed|QSizePolicy.Fixed))
+        self.pauseLabel.setSizePolicy(QSizePolicy(QSizePolicy.Fixed|QSizePolicy.Fixed))
         self.playModeLabel.setSizePolicy(QSizePolicy(QSizePolicy.Fixed|QSizePolicy.Fixed))
 
         hlayout = QHBoxLayout()
@@ -198,6 +200,7 @@ class AI_2DReplayWidget(QWidget):
         hlayout.addWidget(self.pauseButton)
         hlayout.addStretch()
         hlayout.addWidget(self.playModeLabel)
+        hlayout.addWidget(self.pauseLabel)
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(self.replayWidget)
@@ -224,12 +227,19 @@ class AI_2DReplayWidget(QWidget):
                               and self.ctrlSlider.nowStatus == self.ctrlSlider.totalStatus)
         #在不同模式里en/disable按钮,
         enable = True if self.playMode == 1 else False
-        self.nextRoundButton.setEnabled(enable)
+        self.nextRoundButton.setEnabled(enable and self.ctrlSlider.totalStatus)
         enable = not enable and self.NowEqualTotal
-        self.pauseButton.setEnabled(enable)
+        self.pauseButton.setEnabled(enable and self.ctrlSlider.totalStatus)
 
         modetext = "Continuous" if self.playMode == 0 else "Discontinuous"
         self.playModeLabel.setText(modetext)
+        if self.playMode == 1:
+            pausetext = ""
+        elif self.isPaused:
+            pausetext = "Paused"
+        else:
+            pausetext = "Runing"
+        self.pauseLabel.setText(pausetext)
 
     #被外部调用.
     def setPlayMode(self, mode):
@@ -258,11 +268,17 @@ class AI_2DReplayWidget(QWidget):
    #用户在逐回合暂停模式下按下nextround按键调用次线程的某方法,向平台获得下一个回合的消息.
     #如果用户不在最新回合.自动跳转到最新回合.
     def nextOrder(self):
-        pass
+        self.emit(SIGNAL("nextRound()"))
 
     #在连续播放模式下可以使用这个按键.发送消息让主界面暂停或开始次线程的一定时间向平台发出信号获取信息的行为
     def pauseGame(self):
-        pass
+        if not self.isPaused:
+            self.emit(SIGNAL("pauseRound()"))
+            self.isPaused = True
+        else:
+            self.emit(SIGNAL("nonpauseRound()"))
+            self.isPaused = False
+        self.updateUI()
 
     #在从平台获得信息时,从外部调用
     def updateBeg(self, beginfo):

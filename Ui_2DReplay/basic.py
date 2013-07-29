@@ -165,9 +165,10 @@ class Begin_Info:
         self.base=base
         self.hero_type=hero_type
 class Round_Begin_Info:
-    def __init__(self,move_unit,move_range):
+    def __init__(self,move_unit,move_range,base):
         self.id=move_unit
         self.range=move_range
+        self.base =base
 class Command:
     def __init__(self,move_position,order,target_id=0):
         self.move=move_position

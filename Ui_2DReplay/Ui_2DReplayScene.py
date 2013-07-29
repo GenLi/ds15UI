@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #Ver 0.6.3 edited at 2013-07-23-19:54
 #Changes: type of data changed
@@ -12,35 +11,44 @@ from Ui_Units import *
 import sys, math
 
 
+class a:
+    def __init__(self):
+        self.b = 100
+m = Map_Basic
+u = Base_Unit
 
-class Unit_forTest:
-    def __init__(self, x, y, type):
-        self.x = x
-        self.y = y
-        self.type = type
+maps = [[m(0), m(0), m(1), m(1)],
+        [m(1), m(1), m(0), m(1)],
+        [m(1), m(0), m(1), m(0)],
+        [m(0), m(0), m(1), m(1)]]
+units = [u(1, (0, 0)), u(2, (0, 1)), u(3, (0, 2)),
+         u(3, (3, 3)), u(2, (3, 2)), u(1, (3, 1))]
+units2 = [[u(1, (0, 0)), u(2, (0, 1)), u(3, (0, 2))],
+          [u(3, (3, 3)), u(2, (3, 2)), u(1, (3, 1))]]
+iniInfo = Begin_Info(maps, units2)
+begInfo = Round_Begin_Info(1, ((1, 1)), units2)
 
-a = Unit_forTest
-maps = [[0, 0, 0, 1, 1, 1, 0, 1],
-        [3, 3, 3, 4, 1, 1, 0, 0],
-        [3, 3, 0, 1, 2, 2, 2, 2],
-        [0, 0, 0, 0, 2, 2, 2, 2]]
-units = [a(0, 0, LANCER), a(1, 3, SABER), a(2, 3, ARCHER), a(3, 4, HERO_1)]
-route = ((0, 0), (0, 1), (1, 1), (1, 2), (1, 3))
+route = ((0, 1), (0, 2), (1, 2), (2, 2))
+def fun():
+    return route
+cmd = Command(0, (2, 2), 0)
+endInfo = Round_End_Info(units2, None, (0, 0), -1)
+
 #data for test
 
 
-
-class Ui_2DReplayView(QtGui.QGraphicsView):
+class Ui_ReplayView(QtGui.QGraphicsView):
     "the replay graphic view"
     def __init__(self, scene, parent = None):
         QtGui.QGraphicsView.__init__(self, scene, parent)
         self.mapItem = []
         self.soldierItem = []
         self.soldierAlive = []
+        self.sizeX = 0
+        self.sizeY = 0
         #ini of items
-        fricker = self.startTimer(300) #the period of the cursor frickering
-        self.cursor = Ui_GridCursor(fricker)
-        scene.addItem(self.cursor)
+        self.cursor = None
+        self.timerId = self.startTimer(500)#frickering period
         #ini of the cursor
         self.movTimeline = QtCore.QTimeLine()
         self.atkTimeline = QtCore.QTimeLine()
@@ -48,7 +56,10 @@ class Ui_2DReplayView(QtGui.QGraphicsView):
         self.animation = QtGui.QGraphicsItemAnimation()
         self.label = Ui_GridLabel("", 0, 0)
         #ini of the animation
-    def Initialize(self, maps, units, side0 = 0, parent = None):
+    def Initialize(self, maps, units, side0 = 0):
+        scene = self.scene()
+        self.sizeX = len(maps)*UNIT_WIDTH
+        self.sizeY = len(maps[0])*UNIT_HEIGHT
         self.mapItem = []
         for i in range(len(maps)):
             newColumn = []
@@ -67,19 +78,20 @@ class Ui_2DReplayView(QtGui.QGraphicsView):
             side = 0
             if (i>=side0):
                 side = 1
-            newSoldierUnit = Ui_SoldierUnit(units[i].x, units[i].y,
-                                            units[i].type, side, i)
+            newSoldierUnit = Ui_SoldierUnit(i, side, units[i])
             scene.addItem(newSoldierUnit)
             self.soldierItem.append(newSoldierUnit)
             self.soldierAlive.append(True)
         self.SetSoldiers(units)
         #initialization of soldier units
+        self.cursor = Ui_GridCursor(self.timerId)
+        scene.addItem(self.cursor)
         self.setMouseTracking(True)#for test
         #initialization of the cursor
 
     def SetSoldiers(self, units):
         "set the pos of soldiers"
-        alive = map(lambda unit: (unit.life==0), units)
+        alive = map(lambda unit: (unit.life!=0), units)
         for i in range(len(units)):
             if (alive[i]!=self.soldierAlive[i] and alive[i]):
                 self.scene().addItem(self.soldierItem[i])
@@ -87,9 +99,11 @@ class Ui_2DReplayView(QtGui.QGraphicsView):
                 self.scene().removeItem(self.soldierItem[i])
             self.soldierAlive[i] = alive[i]
             if (self.soldierAlive[i]):
-                self.soldierItem[i].setPos(GetPos(units[i].x, units[i].y))
+                self.soldierItem[i].setPos(GetPos(units[i].position[0],
+                                                  units[i].position[1]))
                 self.soldierItem[i].mapX, self.soldierItem[i].mapY = \
-                                      units[i].x, units[i].y
+                                      units[i].position[0], units[i].position[1]
+        print self.soldierAlive#for test
 
     #animation
     def MovingAnimation(self, idnum, route):
@@ -190,14 +204,16 @@ class Ui_2DReplayView(QtGui.QGraphicsView):
             self.cursor.setOpacity(1-self.cursor.opacity()) #make the cursor fricker
         if (self.cursor.isFixed):
             self.cursor.setOpacity(1)
+        print self.cursor.opacity()#for test
     def mouseMoveEvent(self, event):
         #bug: not the scene position!
         #bug: need to restrict the cursor in the scene!
         x = int(event.x()/UNIT_WIDTH)
         y = int(event.y()/UNIT_HEIGHT)
         self.cursor.setPos(GetPos(x, y))
-    def mousePressEvent(self, event):
-        pass
+        print x, y#for test
+
+
 
 class UiD_BeginChanges:
     def __init__(self, beginInfo, cmd, endInfo):
@@ -205,21 +221,28 @@ class UiD_BeginChanges:
 
 class UiD_EndChanges:
     def __init__(self, begInfo, cmd, endInfo):
+        self.idNum = idNum = begInfo.id[0]*len(endInfo.base[0])+begInfo.id[1]
         self.route = fun()#
         self.order = cmd.order
-        target = self.target = cmd.target[0]*len(endInfo.base[0])+cmd.target[1]
-        idNum = self.idNum = begInfo.id[0]*len(endInfo.base[0])+begInfo.id[1]
-        self.damage = (endInfo.base[idNum].life-begInfo.base[idNum].life,
-                       endInfo.base[target].life-begInfo.base[target].life) #(self, enemy)
-        self.note = ["", ""]
-        for i in range(2):
-            if (self.damage[i]==0):
-                if (endInfo.attack_effect):
-                    self.note[i] = "Blocked!"
-                else:
-                    self.note[i] = "Miss"
-#        self.fightBack = #
-        self.isDead = (endInfo.base[idNum].life==0, endInfo.base[target].life==0)
+        if (cmd.order==1):
+            target = self.target = cmd.target[0]*len(endInfo.base[0])+cmd.target[1]
+            begUnits = begInfo.base[0]
+            begUnits.extend(begInfo.base[1])
+            endUnits = endInfo.base[0]
+            endUnits.extend(endInfo.base[1])
+            self.damage = (endUnits[idNum].life-begUnits[idNum].life,
+                           endUnits[target].life-begUnits[target].life) #(self, enemy)
+            self.note = ["", ""]
+            for i in (0, 1):
+                if (self.damage[i]==0):
+                    if (endInfo.attack_effect[i]==1):
+                        self.note[i] = "Blocked!"
+                    elif (endInfo.attack_effect[i]==0):
+                        self.note[i] = "Miss"
+            self.fightBack = (endInfo.attack_effect[1]!=-1) and (endUnits.life!=0)
+            self.isDead = (endInfo.base[idNum].life==0, endInfo.base[target].life==0)
+        elif (cmd.order==2):
+            pass#skill
 
 class UiD_RoundInfo:
     "info of every round"
@@ -255,11 +278,11 @@ class UiD_BattleData:
 if __name__=="__main__":
     app = QtGui.QApplication(sys.argv)
     scene = QtGui.QGraphicsScene()
-    view = Ui_ReplayView(scene, maps, units)
+    view = Ui_ReplayView(scene)
     view.setBackgroundBrush(QtGui.QColor(255, 255, 255))
+    view.Initialize(maps, units, 3)
     view.setWindowTitle("Replay")
     view.show()
-    print view.soldierItem[1].mapX, view.soldierItem[1].mapY#for test
     view.MovingAnimation(1, route)#for test
     #view.TerminateAnimation(units)#for test
     #view.AttackingAnimation(0, 3, -20, "Blocked")#for test
