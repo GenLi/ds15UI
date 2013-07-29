@@ -71,10 +71,6 @@ class InfoWidget(QTabWidget):
         self.infoWidget_Map.info_score.setText("%d" %map_basic.score)
         self.infoWidget_Mao.info_consumption.setText("%d" %map_basic.move_consumption)
         self.setCurrentWidget(self.infoWidget_Map)
-    def offSelected(self):
-        self.infoWidget_Map.infoReset()
-        self.infoWidget_Unit.infoReset()
-        self.setCurrentWidget(self.infoWidget_Game)
 
 class InfoWidget1(QWidget):
     def __init__(self, parent = None):
@@ -190,9 +186,7 @@ class InfoWidget2(QWidget):
 
         self.setLayout(self.layout)
 
-    def infoReset(self):
-        for info in self.infos:
-            info.setText("")
+
 
 class InfoWidget3(QWidget):
     def __init__(self, parent = None):
@@ -221,9 +215,7 @@ class InfoWidget3(QWidget):
 
         self.setLayout(self.layout)
 
-    def infoReset(self):
-        for info in self.infos:
-            info.setText("")
+
 
 #just for test
 if __name__ == "__main__":

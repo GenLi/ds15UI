@@ -4,27 +4,31 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys
-from info_widget import *
 import qrc_resource
+from info_widget import *
+from Ai_Thread import *
 from AI_2DReplayWidget import *
+import sio
 
 RUN_MODE = 0
 DEBUG_MODE = 1
-
+DEFAULT_SCILENT_AI = ""#默认的ai路径
 
 class ai_debugger(QMainWindow):
     def __init__(self, parent = None):
         super(ai_debugger, self).__init__(parent)
 
+     #   self.gameMode = sio.AI_VS_AI
         self.started = False
-        self.loaded_ai = None
+        self.loaded_ai = []
         self.loaded_map = None
+        self.lock = QReadWriteLock()#留着备用...暂时我还没有设置共同数据
+        self.pltThread = Ai_Thread(self.lock)
       #  self.replay_speed = MIN_REPLAY_SPEED
-        self.pausepoints = []
         self.ispaused = False
         #composite replay widget
         self.replayScene = QGraphicsScene()
-        self.replayWindow = AI_2DReplayWidget(self.replayScene)
+        self.replayWindow = AiReplayWidget(self.replayScene)
 
         #add a dock widget to show infomations of the running AI and loaded files
 
@@ -137,9 +141,12 @@ class ai_debugger(QMainWindow):
                      self.infoWidget, SLOT("newUnitInfo"))
         self.connect(self.replayWindow.replayWidget, SIGNAL("mapGridSelected"),
                      self.infoWidget, SLOT("newMapInfo"))
-
-        self.connect(self.replayWindow, SIGNAL("nextRound()"), self.sthread.nextRound)
-        self.connect(self.replayWindow, SIGNAL("pauseRound()"), self.sthread.pauseRound)
+        #线程与进度条的通信
+        self.connect(self.replayWindow, SIGNAL("nextRound()"), self.nextRound)
+        self.connect(self.replayWindow, SIGNAL("pauseRound()"), self.pauseRound)
+        self.connect(self.replayWindow, SIGNAL("nonpauseRound()"), self.nonPauseRound)
+        #线程与界面的通信
+        self.connect(self.pltThread, SIGNAL("firstRecv"), self.on_firstRecv)
         self.updateUi()
         self.setWindowTitle("DS15_AIDebugger")
 
@@ -171,7 +178,7 @@ class ai_debugger(QMainWindow):
 
     #enable/disable actions according to the game status
     def updateUi(self):
-        if self.loaded_ai and self.loaded_map:
+        if len(self.loaded_ai) != 0 and self.loaded_map:
             if not self.started:
                 self.gameStartAction.setEnabled(True)
                 self.gamePauseAction.setEnabled(False)
@@ -192,8 +199,13 @@ class ai_debugger(QMainWindow):
             self.gameLoadAction2.setEnabled(True)
     #game operation slot
     def startGame(self):
+        if len(self.loaded_ai) == 1:
+            self.loaded_ai.append(DEFAULT_SCILENT_AI)
+        self.pltThread.initialize(self.loaded_ai,self.loaded_map)
+        self.pltThread.start()
         self.started = True
         #这里开一个线程开始交互
+        
         self.updateUi()
 
     def pauseGame(self):
@@ -202,52 +214,64 @@ class ai_debugger(QMainWindow):
     def endGame(self):
         self.started = False
         self.updateUi()
-
+#设置两个loadai而且只要把文件路径得到就好了.传给平台时如果得到错误再打印错误信息
     def loadAIdlg(self):
-        dir = r"./FileAI"
+        dir = QDir.toNativeSeparators(r"./FileAI")
         fname = unicode(QFileDialog.getOpenFileName(self,
                                                     "load AI File", dir,
                                                     "AI files (%s)" % "*.exe"))
-        if fname and fname != self.loaded_ai:
-            if self.loadAI(fname):
-                self.loaded_ai = fname
-                self.infoWidget.infoWidget_Game.setAiFileinfo(fname)
-                self.updateUi()
-            else:
-                QMessageBox.critical(self, "Error", "Failed to load the AI file %s"
-                                     %fname, QMessageBox.Ok, QMessageBox.NoButton)
+        if len(loaded_ai) < 2 and fname:
+            self.loaded_ai.append(fname)
+            self.updateUi()
+
     def loadMapdlg(self):
-        dir = r"./FileMap"
+        dir = QDir.toNativeSeparators(r"./FileMap")
         fname = unicode(QFileDialog.getOpenFileName(self,
                                                     "load Map File", dir,
                                                     "Map files (%s)" % "*.map"))
         if fname and fname != self.loaded_map:
-            if self.loadAI(fname):
-                self.loaded_map = fname
-                self.infoWidget.infoWidget_Game.setMapFileinfo(fname)
-                self.updateUi()
-            else:
-                QMessageBox.critical(self, "Error", "Failed to load the Map file %s"
-                                     %fname, QMessageBox.Ok, QMessageBox.NoButton)
+            self.loaded_map = fname
+            self.updateUi()
+    def nextRound(self):
+        global WaitForNext
+        WaitForNext.wakeAll()
 
-    #传递ai文件路径给平台,失败返回False
-    def loadAI(self, name):
-        return True
-    #解析地图文件获得地图列表并传递给平台
-    def loadMap(self, fname):
-        return True
-    #给平台发出这种模式信息...
-    def setRunMode(self):
-        pass
+    def pauseRound(self):
+        self.pltThread.pause()
 
-    def setDebugMode(self):
-        pass
+    def nonPauseRound(self):
+        global WaitForPause
+        WaitForPause.wakeAll()
+    def on_firstRecv(self, mapInfo, frInfo, aiInfo):
+        self.replayWindow.updateIni(basic.Begin_Info(mapinfo, base), frInfo)
+        #这个base...要怎么给...平台组貌似没有给aivsai的base接口和hero接口???
+        self.infoWidget.beginRoundInfo(frInfo)
+        #可以加入提示游戏已经开始
+        #这个aiInfo是什么...
+
+    def on_rbRecv(self, rbInfo):
+        self.replayWindow.updateBeg(rbInfo)
+        self.infoWidget.beginRoundInfo(rbInfo)
+
+    def on_reRecv(self, rCommand, reInfo):
+        self.replayWindow.updateEnd(rCommand, reInfo)
+        self.infoWidget.endRoundInfo(rCommand, reInfo)
+ #   def setRunMode(self):
+  #      pass
+
+#    def setDebugMode(self):
+ #       pass
 
     def setConMode(self):
-        self.replayWindow.setPlayMode(0)
+        self.replayWindow.setPlayMode(1)
+        self.pltThread.Con = 1             #没有考虑清楚此处是否需要用mutexlock
+
 
     def setDisconMode(self):
-        self.replayWindow.setPlayMode(1)
+
+        self.replayWindow.setPlayMode(0)
+        self.pltThread.Con = 0
+
 
     def reset(self):
         pass
