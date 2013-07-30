@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+#Fox Ning
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-#import basic
 
-#two dictionaries for show types of map or unit
+
+#Three dictionaries for show types of map or unit
 NumToMapType = {0:"PLAIN",1:"MOUNTAIN",2:"FOREST",3:"BARRIER",4:"TURRET",
                  5:"TRAP",6:"TEMPLE",7:"GEAR"}
 NumToUnitType = {0:"SABER",1:"LANCER",2:"ARCHER",3:"DRAGON RIDER",
@@ -31,10 +32,11 @@ class InfoWidget(QTabWidget):
         self.setTabToolTip(2, "the selected unit's infos")
         self.setTabToolTip(3, "the selected map-grid's infos")
 
-    #reimplement close event:just set invisible
+    #reimplement close event:仅仅设置它不可见,而不是关闭
     def closeEvent(self, event):
         self.hide()
         event.ignore()
+    #为了同步主界面窗口菜单的显示加入的event handler
     def hideEvent(self, event):
         self.emit(SIGNAL("hided()"))
     #展现战斗信息
@@ -47,6 +49,7 @@ class InfoWidget(QTabWidget):
                                                              NumToActionType[cmd.order],
                                                              cmd.target))
         self.infoWidget_Game.setEffectinfo("%s" %endinfo.effect)
+        self.infoWidget_Game.setScoreinfo("%d : %d" %(endinfo.score[0],endinfo.score[1]))
         self.beg_Flag = 0
     def goToGameInfo(self, _round, round_info):
         self.sender = self.sender()
@@ -71,7 +74,7 @@ class InfoWidget(QTabWidget):
         self.infoWidget_Map.info_score.setText("%d" %map_basic.score)
         self.infoWidget_Mao.info_consumption.setText("%d" %map_basic.move_consumption)
         self.setCurrentWidget(self.infoWidget_Map)
-
+#展示游戏基础信息
 class InfoWidget1(QWidget):
     def __init__(self, parent = None):
         super(InfoWidget1, self).__init__(parent)
@@ -97,6 +100,9 @@ class InfoWidget1(QWidget):
         self.label_effect = QLabel("attack effect:")
         self.info_effect = QLineEdit("")
         self.info_effect.setReadOnly(True)
+        self.label_score = QLabel("socre:")
+        self.info_score = QLineEdit("0:0")
+        self.info_score.setReadOnly(True)
 
         self.layout = QGridLayout()
         self.layout.addWidget(self.label_aifile, 0, 0)
@@ -114,6 +120,8 @@ class InfoWidget1(QWidget):
         self.layout.addWidget(self.info_cmd, 5, 1)
         self.layout.addWidget(self.label_effect, 6, 0)
         self.layout.addWidget(self.info_effect, 6, 1)
+        self.layout.addWidget(self.label_score, 7, 0)
+        self.layout.addWidget(self.info_score, 7, 1)
 
         self.setLayout(self.layout)
         self.setStyleSheet(StyleSheet)
@@ -132,10 +140,12 @@ class InfoWidget1(QWidget):
         self.info_cmd.setText(str)
     def setEffectinfo(self,str):
         self.info_effect.setText(str)
+    def setScoreinfo(self, str):
+        self.info_score.setText(str)
     def resetEnd(self):
         self.setEffectinfo("")
         self.setCmdinfo("")
-
+#展示单位基础信息
 class InfoWidget2(QWidget):
     def __init__(self, parent = None):
         super(InfoWidget2, self).__init__(parent)
@@ -187,7 +197,7 @@ class InfoWidget2(QWidget):
         self.setLayout(self.layout)
 
 
-
+#展示地图基础信息
 class InfoWidget3(QWidget):
     def __init__(self, parent = None):
         super(InfoWidget3, self).__init__(parent)

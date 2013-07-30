@@ -6,7 +6,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from functools import partial
-from Ui_2DReplay.Ui_ReplayWidget import *
+#from Ui_2DReplay.Ui_ReplayWidget import *
 
 class CtrlSlider(QWidget):
     XMARGIN = 12.0
@@ -166,7 +166,7 @@ class AiReplayWidget(QWidget):
         self.isPaused = False
       #  self.TotalStatus = 0#默认在回合开始
         self.replayWidget = Ui_2DReplayWidget(scene, parent)
-        #self.replayWidget = QLabel()
+      #  self.replayWidget = QLabel()
         self.ctrlSlider = CtrlSlider()
         self.totalLabel = QLabel("total round:")
         self.nowLabel = QLabel("now round:")
@@ -239,13 +239,14 @@ class AiReplayWidget(QWidget):
             pausetext = "Runing"
         self.pauseLabel.setText(pausetext)
 
-    #被外部调用.
+    #被外部调用,设置播放模式为连续或者不连续
     def setPlayMode(self, mode):
         self.playMode = mode
         self.updateUI()
 
     def setNowRound(self, a, b):
         self.replayWidget.GoToRound(a,b)
+        #信息展示的处理还没有做.
         self.updateUI()
 
     #validate nowInfo的输入
