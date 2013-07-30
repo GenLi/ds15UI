@@ -100,7 +100,7 @@ class AiThread(QThread):
 
 
 
-
+#调试器主界面
 class ai_debugger(QMainWindow):
     def __init__(self, parent = None):
         super(ai_debugger, self).__init__(parent)
@@ -125,7 +125,7 @@ class ai_debugger(QMainWindow):
         self.infoDockWidget.setObjectName("InfoDockWidget")
         self.infoDockWidget.setAllowedAreas(Qt.LeftDockWidgetArea|
                                             Qt.RightDockWidgetArea)
-        self.infoWidget = InfoWidget()
+        self.infoWidget = InfoWidget(self)
         self.infoDockWidget.setWidget(self.infoWidget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.infoDockWidget)
         self.info_visible = self.infoDockWidget.isVisible()
