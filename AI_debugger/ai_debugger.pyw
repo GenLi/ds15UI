@@ -8,10 +8,11 @@ import qrc_resource
 from info_widget import *
 #from Ai_Thread import *
 from AI_2DReplayWidget import *
-import sio
+import socket,cPickle,sio,time,basic
 
 DEBUG_MODE = 1
-DEFAULT_SCILENT_AI = ""#默认的ai路径
+DEFAULT_SCILENT_AI = ""#默认的ai路径,待设置
+
 
 WaitForNext = QWaitCondition()
 WaitForPause = QWaitCondition()
@@ -22,9 +23,10 @@ class AiThread(QThread):
 
         self.lock = lock
         self.mutex = QMutex()
-        self.isPaused = False
-        self.Con = 1
+        self.isPaused = False#是否暂停
+        self.Con = 1#连续模式，连续模式下可以设置暂停
 
+    #每次开始游戏时，用ai路径和地图路径调用initialize以开始一个新的游戏
     def initialize(self, gameAIPath, gameMapPath):
         self.conn = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         try:
@@ -47,6 +49,12 @@ class AiThread(QThread):
             self.isPaused = True
         finally:
             self.mutex.unlock()
+    def nonPause(self):
+        try:
+            self.mutex.lock()
+            self.isPaused = False
+        finally:
+            self.mutex.unlock()
 
     def isPaused(self):
         try:
@@ -61,6 +69,8 @@ class AiThread(QThread):
         global WaitForNext,WaitForPause
         if self.Con and self.isPaused():
             WaitForPause.wait()
+        if not self.Con:
+            WaitForNext.wait()
         rCommand, reInfo = sio._recvs(self.conn)
         #第一个回合单独搞出来
         self.emit(SIGNAL("reRecv"), rCommand, reInfo)
@@ -111,13 +121,14 @@ class ai_debugger(QMainWindow):
         self.loaded_map = None
         self.lock = QReadWriteLock()#留着备用...暂时我还没有设置共同数据
         #先init这个与平台交互的线程
-        self.pltThread = Ai_Thread(self.lock)
+        self.pltThread = AiThread(self.lock)
 #        self.replay_speed = MIN_REPLAY_SPEED
         self.ispaused = False
 
         #composite replay widget
         self.replayScene = QGraphicsScene()
         self.replayWindow = AiReplayWidget(self.replayScene)
+        self.setCentralWidget(self.replayWindow)
 
         #add a dock widget to show infomations of the running AI and loaded files
 
@@ -154,12 +165,13 @@ class ai_debugger(QMainWindow):
         self.gameLoadAction2 = self.createAction("Load &MAP", self.loadMapdlg,
                                            "Ctrl+M", "loadMap",
                                            "load MAP")
-
+        self.gameUnloadAction = self.createAction("Unload Ais", self.unloadAI,
+                                                  tip = "unload Ais")
         #creat game menu and add actions
         self.gameMenu = self.menuBar().addMenu("&Game")
         self.addActions(self.gameMenu, (self.gameStartAction,
                                   self.gameEndAction, None, self.gameLoadAction1,
-                                        self.gameLoadAction2))
+                                        self.gameLoadAction2, self.gameUnloadAction))
 
         #creat actions and add them to config menu
         self.configMenu = self.menuBar().addMenu("&Config")
@@ -236,7 +248,7 @@ class ai_debugger(QMainWindow):
                      SLOT("deleteLater()"))
         #进度条到主界面的通信
         self.connect(self.replayWindow, SIGNAL("nextRound()"), self.nextRound)
-        self.connect(self.replayWindow, SIGNAL("pauseRound()"), self.pauseRound)
+#        self.connect(self.replayWindow, SIGNAL("pauseRound()"), self.pauseRound)
         self.connect(self.replayWindow, SIGNAL("nonpauseRound()"), self.nonPauseRound)
         #次线程到界面的通信
         self.connect(self.pltThread, SIGNAL("firstRecv"), self.on_firstRecv)
@@ -295,6 +307,7 @@ class ai_debugger(QMainWindow):
     #game operation slot
     def startGame(self):
         if len(self.loaded_ai) == 1:
+            #加入默认的什么都不做ai
             self.loaded_ai.append(DEFAULT_SCILENT_AI)
         #开始这个线程开始交互
         self.pltThread.initialize(self.loaded_ai,self.loaded_map)
@@ -307,19 +320,25 @@ class ai_debugger(QMainWindow):
   #      self.replayWindow.pauseGame()
 
     def endGame(self):
-
+        #待实现
         #强制在游戏没有进行到胜利条件的时候结束游戏
         self.started = False
         self.loaded_ai = []
         self.updateUi()
-#设置两个loadai而且只要把文件路径得到就好了.传给平台时如果得到错误再打印错误信息
+
+    #把已经选择好的的ai文件路径清空,以便修改ai文件路径
+    def unloadAI(self):
+        self.loaded_ai = []
+        self.infoWidget.infoWidget_Game.setAiFileinfo(["",""])
+
     def loadAIdlg(self):
         dir = QDir.toNativeSeparators(r"./FileAI")
         fname = unicode(QFileDialog.getOpenFileName(self,
                                                     "load AI File", dir,
                                                     "AI files (%s)" % "*.exe"))
-        if len(loaded_ai) < 2 and fname:
+        if len(self.loaded_ai) < 2 and fname:
             self.loaded_ai.append(fname)
+            self.infoWidget.infoWidget_Game.setAiFileinfo(self.loaded_ai)
             self.updateUi()
 
     def loadMapdlg(self):
@@ -329,6 +348,7 @@ class ai_debugger(QMainWindow):
                                                     "Map files (%s)" % "*.map"))
         if fname and fname != self.loaded_map:
             self.loaded_map = fname
+            self.infoWidget.infoWidget_Game.setMapFileinfo(self.loaded_map)
             self.updateUi()
 
     def nextRound(self):
@@ -339,6 +359,7 @@ class ai_debugger(QMainWindow):
     def nonPauseRound(self):
         global WaitForPause
         #唤醒所有在waitforpause的线程
+        self.pltThread.nonPause()
         WaitForPause.wakeAll()
 
     def on_firstRecv(self, mapInfo, frInfo, aiInfo):
@@ -363,14 +384,28 @@ class ai_debugger(QMainWindow):
 
     def setConMode(self):
         self.replayWindow.setPlayMode(1)
-        self.pltThread.Con = 1
-         #没有考虑清楚此处是否需要用mutexlock
+        #这个lock可以考虑移到AiThread类里实现
+        try:
+            self.pltThread.mutex.lock()
+            self.pltThread.Con = 1
+        finally:
+            self.pltThread.mutex.unlock()
+        #唤醒可能正在waitForNext的次线程,跳到下一回合
+        self.nextRound()
+         
 
 
     def setDisconMode(self):
         self.replayWindow.setPlayMode(0)
-        self.pltThread.Con = 0
-
+        #唤醒可能正在waitForPause的次线程，也就是说在游戏暂停时设置
+        #disconMode的时候会往后跳一个状态
+        try:
+            self.pltThread.mutex.lock()
+            self.pltThread.Con = 0
+        finally:
+            self.pltThread.mutex.unlock()
+        self.pltThread.nonPause()
+        self.nonPauseRound()
 
     def reset(self):
         pass

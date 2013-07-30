@@ -57,8 +57,7 @@ class InfoWidget(QTabWidget):
 
         if self.sender == None:
             pass
-        #待实现,1在跳转回合时从回放里设置的类传出的信号设置,2从平台获取最新信息时
-        ##根据得到的类们设置。(等待gotoround发出信号,以及信息的定义)
+        #待实现,在跳转回合时从回放里设置的类传出的信号设置
     #展现单位,地形信息
     def newUnitInfo(self, base_unit):
         self.infoWidget_Unit.info_type.setText(NumToUnitType[base_unit.kind])
@@ -80,8 +79,10 @@ class InfoWidget1(QWidget):
         super(InfoWidget1, self).__init__(parent)
 
         self.label_aifile = QLabel("AI file path:")
-        self.info_aifile = QLineEdit("")
-        self.info_aifile.setReadOnly(True)
+        self.info_aifile1 = QLineEdit("")
+        self.info_aifile1.setReadOnly(True)
+        self.info_aifile2 = QLineEdit("")
+        self.info_aifile2.setReadOnly(True)
         self.label_mapfile = QLabel("MAP file path:")
         self.info_mapfile = QLineEdit("")
         self.info_mapfile.setReadOnly(True)
@@ -106,27 +107,33 @@ class InfoWidget1(QWidget):
 
         self.layout = QGridLayout()
         self.layout.addWidget(self.label_aifile, 0, 0)
-        self.layout.addWidget(self.info_aifile, 0, 1)
-        self.layout.addWidget(self.label_mapfile, 1, 0)
-        self.layout.addWidget(self.info_mapfile, 1, 1)
-        self.layout.addWidget(self.label_round, 2, 0)
+        self.layout.addWidget(self.info_aifile1, 0, 1)
+        self.layout.addWidget(self.info_aifile2, 1, 1)
+        self.layout.addWidget(self.label_mapfile, 2, 0)
+        self.layout.addWidget(self.info_mapfile, 2, 1)
+        self.layout.addWidget(self.label_round, 3, 0)
 
-        self.layout.addWidget(self.info_round, 2, 1)
-        self.layout.addWidget(self.label_unit, 3, 0)
-        self.layout.addWidget(self.info_unit, 3, 1)
-        self.layout.addWidget(self.label_time, 4, 0)
-        self.layout.addWidget(self.info_time, 4, 1)
-        self.layout.addWidget(self.label_cmd, 5, 0)
-        self.layout.addWidget(self.info_cmd, 5, 1)
-        self.layout.addWidget(self.label_effect, 6, 0)
-        self.layout.addWidget(self.info_effect, 6, 1)
-        self.layout.addWidget(self.label_score, 7, 0)
-        self.layout.addWidget(self.info_score, 7, 1)
+        self.layout.addWidget(self.info_round, 3, 1)
+        self.layout.addWidget(self.label_unit, 4, 0)
+        self.layout.addWidget(self.info_unit, 4, 1)
+        self.layout.addWidget(self.label_time, 5, 0)
+        self.layout.addWidget(self.info_time, 5, 1)
+        self.layout.addWidget(self.label_cmd, 6, 0)
+        self.layout.addWidget(self.info_cmd, 6, 1)
+        self.layout.addWidget(self.label_effect, 7, 0)
+        self.layout.addWidget(self.info_effect, 7, 1)
+        self.layout.addWidget(self.label_score, 8, 0)
+        self.layout.addWidget(self.info_score, 8, 1)
 
         self.setLayout(self.layout)
         self.setStyleSheet(StyleSheet)
-    def setAiFileinfo(self, str):
-        self.info_aifile.setText(str)
+    def setAiFileinfo(self, loaded_ai):
+        self.info_aifile1.setText(loaded_ai[0])
+        if len(loaded_ai) == 2:
+            self.info_aifile2.setText(loaded_ai[1])
+        else:
+            self.info_aifile2.setText("Default")
+            
     def setMapFileinfo(self, str):
         self.info_mapfile.setText(str)
      #逻辑接口里把回合和单位行动周期搞混了,这个回合是什么呢...

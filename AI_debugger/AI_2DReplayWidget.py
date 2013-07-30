@@ -16,8 +16,8 @@ class CtrlSlider(QWidget):
         super(CtrlSlider, self).__init__(parent)
 
         self.pausePoint = []
-        self.nowRound = 2
-        self.totalRound = 2
+        self.nowRound = 0
+        self.totalRound = 0
         self.nowStatus = 0
         self.totalStatus = 0
         self.setFocusPolicy(Qt.NoFocus)
@@ -84,8 +84,8 @@ class CtrlSlider(QWidget):
             self.totalStatus = 1
             self.nowStatus = 1
         else:
+            #当前回合和总回合一起前移，播放最新的状态
             self.totalRound += 1
-        #要不要加当前回合呢...想清楚
             self.nowRound += 1
         self.emit(SIGNAL("totalChanged()"))
         self.update()
@@ -100,7 +100,7 @@ class CtrlSlider(QWidget):
             value = 0
         else:
             value = ((self.nowRound-1) * 2 + self.nowStatus) / float((self.totalRound-1) * 2 + self.totalStatus)
-            painter = QPainter(self)
+        painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.TextAntialiasing)
         painter.setPen(self.palette().color(QPalette.Mid))
@@ -164,18 +164,18 @@ class AiReplayWidget(QWidget):
         self.NowEqualTotal = True
         self.playMode = 1#默认连续播放模式0, 逐回合暂停模式为1
         self.isPaused = False
-      #  self.TotalStatus = 0#默认在回合开始
+
         self.replayWidget = Ui_2DReplayWidget(scene, parent)
-      #  self.replayWidget = QLabel()
+     #   self.replayWidget = QLabel()
         self.ctrlSlider = CtrlSlider()
         self.totalLabel = QLabel("total round:")
         self.nowLabel = QLabel("now round:")
         self.totalInfo = QLCDNumber()
-        self.totalInfo.display(2)
+        self.totalInfo.display(0)
         self.totalInfo.setSegmentStyle(QLCDNumber.Flat)
         self.totalStatusInfo = QLabel("At begin")
         self.nowInfo = QLineEdit("")
-        self.nowInfo.setText("2")
+        self.nowInfo.setText("0")
         self.nowStatusInfo = QLabel("At begin")
         self.nextRoundButton = QPushButton("Next Round")
         self.pauseButton = QPushButton("Pause")
@@ -246,7 +246,8 @@ class AiReplayWidget(QWidget):
 
     def setNowRound(self, a, b):
         self.replayWidget.GoToRound(a,b)
-        #信息展示的处理还没有做.
+        #信息展示的处理还没有做.在gotoround后同步游戏信息展示，
+        #详情见汇报
         self.updateUI()
 
     #validate nowInfo的输入
@@ -256,7 +257,7 @@ class AiReplayWidget(QWidget):
             self.nowInfo.setText(QString.number(self.ctrlSlider.nowRound))
             self.nowInfo.selectAll()
             self.nowInfo.setFocus()
-        elif 0 < int(now) <= self.ctrlSlider.totalRound:
+        elif now.isdigit() and 0 < int(now) <= self.ctrlSlider.totalRound:
             self.ctrlSlider.changeNowRound(int(now),0)                #修改nowlineedit默认跳转到该回合开始阶段
         else:
             self.nowInfo.setText(QString.number(self.ctrlSlider.nowRound))
@@ -278,11 +279,13 @@ class AiReplayWidget(QWidget):
             self.isPaused = False                  
         self.updateUI()
 
-    #在从平台获得信息时,从外部调用
+    #下面三个方法在从平台获得信息时,从外部调用，
+    #包装了回放界面的UpdateBeginInfo，UpdateEndInfo这些函数
     def updateIni(self, ini_info, beginfo):
         self.replayWidget.Initialize(ini_info, beginfo)
         self.changeTotalRound()
         self.updateUI()
+
 
     def updateBeg(self, beginfo):
         #获得平台新的信息时自动跳回最新回合.
